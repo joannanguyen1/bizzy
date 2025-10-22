@@ -2,7 +2,7 @@
 
 beli but for hidden gems
 
-Run Command
+Run Commands
 
 1. npm run dev - for running develop server
 2. npm run build - for building the production version
