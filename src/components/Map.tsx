@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import Script from "next/script";
 
 declare global {
   interface Window {
@@ -9,10 +10,12 @@ declare global {
 
 export default function Map() {
   const mapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
 
   useEffect(() => {
     window.initMap = () => {
-      if (!mapRef.current) return;
+      if (!mapRef.current || !inputRef.current) return;
 
       const phillyCenter = { lat: 39.9526, lng: -75.1652 };
       const phillyBounds = new google.maps.LatLngBounds(
@@ -30,8 +33,7 @@ export default function Map() {
         },
       });
 
-      const input = document.getElementById("search-box") as HTMLInputElement;
-      const autocomplete = new google.maps.places.Autocomplete(input, {
+      const autocomplete = new google.maps.places.Autocomplete(inputRef.current, {
         bounds: phillyBounds,
         strictBounds: true,
         fields: ["geometry", "name", "formatted_address"],
@@ -41,36 +43,40 @@ export default function Map() {
         const place = autocomplete.getPlace();
         if (!place.geometry || !place.geometry.location) return;
 
+        // Clear old marker if exists
+        if (markerRef.current) {
+          markerRef.current.setMap(null);
+        }
+
         map.panTo(place.geometry.location);
         map.setZoom(15);
 
-        new google.maps.Marker({
+        // Create and store new marker
+        markerRef.current = new google.maps.Marker({
           position: place.geometry.location,
           map,
           title: place.name,
         });
       });
     };
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
-    script.async = true;
-    document.body.appendChild(script);
-
-    return () => {
-      script.remove();
-    };
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full">
-      <input
-        id="search-box"
-        type="text"
-        placeholder="Search for places in Philadelphia..."
-        className="w-3/4 p-3 mb-4 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200 focus:outline-none"
+    <>
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`}
+        strategy="afterInteractive"
       />
-      <div ref={mapRef} className="w-full h-[600px] rounded-lg shadow-lg" />
-    </div>
+
+      <div className="flex flex-col items-center justify-center w-full h-full">
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="Search for places in Philadelphia..."
+          className="w-3/4 p-3 mb-4 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-blue-200 focus:outline-none"
+        />
+        <div ref={mapRef} className="w-full h-[600px] rounded-lg shadow-lg" />
+      </div>
+    </>
   );
 }
