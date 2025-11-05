@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
   if (!process.env.GOOGLE_MAPS_API_KEY) {
-    return NextResponse.json({ error: 'Google Maps API key not configured' }, { status: 500 });
+    return NextResponse.json({ error: "Google Maps API key not configured" }, { status: 500 });
   }
 
   const { searchParams } = new URL(req.url);
