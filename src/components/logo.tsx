@@ -1,6 +1,6 @@
-export default function BizzyLogo() {
+export default function BizzyLogo({ width = 54, height = 54 }: { width?: number, height?: number }) {
 	return (
-		<svg width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<svg width={width} height={height} viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
 			<g filter="url(#filter0_ddiii_43_255)">
 				<g clipPath="url(#clip0_43_255)">
 					<rect x="3" width="48" height="48" rx="12" fill="#F59E0B" />
