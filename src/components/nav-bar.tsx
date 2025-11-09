@@ -22,6 +22,8 @@ const links = [
   }
 ]
 
+const DROPDOWN_CLOSE_DELAY = 200
+
 type PlaceSuggestion = google.maps.places.AutocompleteSuggestion
 
 export default function NavBar() {
@@ -120,7 +122,7 @@ export default function NavBar() {
                   if (places.length > 0) setIsOpen(true)
                 }}
                 onBlur={() => {
-                  setTimeout(() => setIsOpen(false), 200)
+                  setTimeout(() => setIsOpen(false), DROPDOWN_CLOSE_DELAY)
                 }}
               />
               <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-2 text-muted-foreground/80 peer-disabled:opacity-50">
