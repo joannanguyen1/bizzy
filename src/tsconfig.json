@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "types": ["@types/google.maps"],
     "lib": [
       "dom",
       "dom.iterable",

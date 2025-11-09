@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { savedPlace } from "@/schema/places-schema";
+import { randomUUID } from "crypto";
 
 export async function GET(req: Request) {
   if (!process.env.GOOGLE_MAPS_API_KEY) {
@@ -33,5 +38,45 @@ export async function GET(req: Request) {
       message: err instanceof Error ? err.message : String(err)
     }));
     return NextResponse.json({ error: "Failed to fetch places" }, { status: 500 });
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth.api.getSession(req);
+
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { name, formattedAddress, latitude, longitude, placeId } = body;
+
+    if (!name || !formattedAddress || latitude === undefined || longitude === undefined) {
+      return NextResponse.json(
+        { error: "Missing required fields: name, formattedAddress, latitude, longitude" },
+        { status: 400 }
+      );
+    }
+
+    const newPlace = await db.insert(savedPlace).values({
+      id: randomUUID(),
+      userId: session.user.id,
+      name,
+      formattedAddress,
+      latitude,
+      longitude,
+      placeId: placeId || null,
+    }).returning();
+
+    return NextResponse.json({ success: true, place: newPlace[0] }, { status: 201 });
+  } catch (err) {
+    console.error(JSON.stringify({
+      level: "error",
+      event: "SAVE_PLACE_ERROR",
+      timestamp: new Date().toISOString(),
+      message: err instanceof Error ? err.message : String(err)
+    }));
+    return NextResponse.json({ error: "Failed to save place" }, { status: 500 });
   }
 }

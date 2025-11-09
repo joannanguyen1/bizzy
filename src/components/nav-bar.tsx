@@ -2,6 +2,7 @@
 import { useId, useState, useEffect, useRef } from "react"
 import { MicIcon, SearchIcon, MapPinIcon } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Script from "next/script"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,6 +40,7 @@ interface ExtendedPlacePrediction extends google.maps.places.PlacePrediction {
 
 export default function NavBar() {
   const id = useId()
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState("")
   const [places, setPlaces] = useState<PlaceSuggestion[]>([])
   const [isOpen, setIsOpen] = useState(false)
@@ -107,6 +109,7 @@ export default function NavBar() {
   return (
     <>
       <Script
+        id="google-maps-script"
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
         strategy="afterInteractive"
       />
@@ -165,8 +168,14 @@ export default function NavBar() {
                           <button
                             className="w-full flex items-start gap-2 px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer text-left"
                             onClick={() => {
-                              setSearchQuery(prediction.text?.text || "")
-                              setIsOpen(false)
+                              if (prediction.placeId) {
+                                router.push(`/map?placeId=${encodeURIComponent(prediction.placeId)}`)
+                                setIsOpen(false)
+                                setSearchQuery("")
+                              } else {
+                                setSearchQuery(prediction.text?.text || "")
+                                setIsOpen(false)
+                              }
                             }}
                           >
                             <MapPinIcon className="h-4 w-4 mt-0.5 shrink-0" />
