@@ -28,6 +28,19 @@ interface GoogleMapsPlaceResult {
   place_id?: string;
 }
 
+interface PlacesServiceConstructor {
+  new (map: google.maps.Map): {
+    getDetails: (
+      request: { placeId: string; fields: string[] },
+      callback: (place: GoogleMapsPlaceResult | null, status: string) => void
+    ) => void;
+  };
+}
+
+interface PlacesNamespace {
+  PlacesService: PlacesServiceConstructor;
+}
+
 export default function Map() {
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
@@ -41,11 +54,12 @@ export default function Map() {
     if (!window.google?.maps?.places) return;
 
     const maps = window.google.maps;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const PlacesService = (maps.places as any).PlacesService;
-    if (!PlacesService) return;
+    // PlacesService is not fully typed in @types/google.maps, so we use a type assertion
+    const placesNamespace = maps.places as unknown as PlacesNamespace;
+    const PlacesServiceConstructor = placesNamespace.PlacesService;
+    if (!PlacesServiceConstructor) return;
     
-    const service = new PlacesService(map);
+    const service = new PlacesServiceConstructor(map);
 
     service.getDetails(
       {
@@ -56,7 +70,6 @@ export default function Map() {
         if (status === "OK" && place) {
           if (!place.geometry?.location) return;
 
-          // Clear old marker if exists
           if (markerRef.current) {
             markerRef.current.setMap(null);
           }
@@ -64,14 +77,12 @@ export default function Map() {
           map.panTo(place.geometry.location);
           map.setZoom(15);
 
-          // Create and store new marker
           markerRef.current = new maps.Marker({
             position: place.geometry.location,
             map,
             title: place.name,
           });
 
-          // Store selected place data
           setSelectedPlace({
             name: place.name || "",
             formattedAddress: place.formatted_address || "",
@@ -108,7 +119,6 @@ export default function Map() {
 
       mapInstanceRef.current = map;
 
-      // Load place from URL if placeId is provided
       if (placeIdFromUrl) {
         loadPlaceById(placeIdFromUrl, map);
       }
@@ -117,11 +127,9 @@ export default function Map() {
     let checkGoogle: NodeJS.Timeout | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
 
-    // Check if Google Maps is already loaded
     if (window.google?.maps) {
       initMap();
     } else {
-      // Wait for the script to load (NavBar loads it)
       checkGoogle = setInterval(() => {
         if (window.google?.maps) {
           if (checkGoogle) clearInterval(checkGoogle);
@@ -130,7 +138,6 @@ export default function Map() {
         }
       }, 100);
 
-      // Cleanup interval after 10 seconds
       timeoutId = setTimeout(() => {
         if (checkGoogle) clearInterval(checkGoogle);
       }, 10000);
@@ -147,7 +154,6 @@ export default function Map() {
 
     setIsSaving(true);
     try {
-      // Get current session
       const session = await authClient.getSession();
       
       if (!session?.data?.user) {
@@ -155,7 +161,6 @@ export default function Map() {
         return;
       }
 
-      // Save place to database
       const response = await fetch("/api/places", {
         method: "POST",
         headers: {

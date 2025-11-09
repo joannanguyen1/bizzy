@@ -43,18 +43,15 @@ export async function GET(req: Request) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Get the current session
     const session = await auth.api.getSession(req);
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse request body
     const body = await req.json();
     const { name, formattedAddress, latitude, longitude, placeId } = body;
 
-    // Validate required fields
     if (!name || !formattedAddress || latitude === undefined || longitude === undefined) {
       return NextResponse.json(
         { error: "Missing required fields: name, formattedAddress, latitude, longitude" },
@@ -62,7 +59,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Save place to database
     const newPlace = await db.insert(savedPlace).values({
       id: randomUUID(),
       userId: session.user.id,
