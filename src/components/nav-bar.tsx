@@ -123,7 +123,7 @@ export default function NavBar() {
             ))}
           </div>
           <div className="grow max-sm:hidden">
-            <div className="relative mx-auto w-full max-w-xs">
+            <div className="relative mx-auto w-full">
               <Input
                 id={id}
                 className="peer h-8 px-8"
