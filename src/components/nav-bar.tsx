@@ -24,6 +24,17 @@ const links = [
 
 type PlaceSuggestion = google.maps.places.AutocompleteSuggestion
 
+interface ExtendedPlacePrediction extends google.maps.places.PlacePrediction {
+  structuredFormat?: {
+    mainText?: {
+      text: string;
+    };
+    secondaryText?: {
+      text: string;
+    };
+  };
+}
+
 export default function NavBar() {
   const id = useId()
   const [searchQuery, setSearchQuery] = useState("")
@@ -38,12 +49,14 @@ export default function NavBar() {
     }
 
     if (!searchQuery.trim()) {
-      setPlaces([])
-      setIsOpen(false)
+      queueMicrotask(() => {
+        setPlaces([])
+        setIsOpen(false)
+      })
       return
     }
 
-    setIsLoading(true)
+    queueMicrotask(() => setIsLoading(true))
 
     timeoutRef.current = setTimeout(async () => {
       if (typeof window === "undefined" || !window.google?.maps?.places) {
@@ -142,7 +155,7 @@ export default function NavBar() {
                     </div>
                   ) : places.length > 0 ? (
                     places.map((suggestion, index) => {
-                      const prediction = suggestion.placePrediction
+                      const prediction = suggestion.placePrediction as ExtendedPlacePrediction | null
                       if (!prediction) return null
 
                       return (
@@ -156,9 +169,9 @@ export default function NavBar() {
                           >
                             <MapPinIcon className="h-4 w-4 mt-0.5 shrink-0" />
                             <div className="flex flex-col">
-                              <span className="">{(prediction as any).structuredFormat?.mainText?.text || prediction.text?.text || ""}</span>
+                              <span className="">{prediction.structuredFormat?.mainText?.text || prediction.text?.text || ""}</span>
                               <span className="text-xs text-muted-foreground">
-                                {(prediction as any).structuredFormat?.secondaryText?.text || ""}
+                                {prediction.structuredFormat?.secondaryText?.text || ""}
                               </span>
                             </div>
                           </button>

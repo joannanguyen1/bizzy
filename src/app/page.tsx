@@ -1,6 +1,4 @@
 "use client";
-import BizzyLogo from "@/components/logo";
-import Map from "@/components/Map";
 import NavBar from "@/components/nav-bar";
 import { Button } from "@/components/ui/button";
 
