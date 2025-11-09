@@ -1,6 +1,7 @@
 "use client";
 import NavBar from "@/components/nav-bar";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -18,26 +19,26 @@ export default function HomePage() {
               <Button className="rounded-full px-6 py-6 text-base">Begin your hive</Button>
               <div className="flex flex-row items-center gap-2 mt-6">
                 <div className="flex -space-x-[0.6rem] pointer-events-none select-none">
-                  <img
+                  <Image
                     className="rounded-full ring-2 ring-background"
                     src="/avatars/avatar-1.jpg"
                     width={32}
                     height={32}
-                    alt="Avatar 1"
+                    alt="Community Member Avatar"
                   />
-                  <img
+                  <Image
                     className="rounded-full ring-2 ring-background"
                     src="/avatars/avatar-2.jpg"
                     width={32}
                     height={32}
-                    alt="Avatar 2"
+                    alt="Community Member Avatar"
                   />
-                  <img
+                  <Image
                     className="rounded-full ring-2 ring-background"
                     src="/avatars/avatar-4.jpg"
                     width={32}
                     height={32}
-                    alt="Avatar 3"
+                    alt="Community Member Avatar"
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">Join Sarah and 100 others discovering hidden gems</p>

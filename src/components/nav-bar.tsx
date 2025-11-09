@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import BizzyLogo from "./logo"
 
+const DROPDOWN_CLOSE_DELAY = 200;
+
 const links = [
   {
     label: "Feed",
@@ -111,9 +113,9 @@ export default function NavBar() {
       <header className="border-b px-4 md:px-6">
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex-1 flex flex-row items-center gap-6">
-            <a href="#" className="text-primary hover:text-primary/90">
+            <Link href="/" className="text-primary hover:text-primary/90" aria-label="Home">
               <BizzyLogo width={40} height={40} />
-            </a>
+            </Link>
             {links.map((link) => (
               <Link key={link.href} href={link.href} className="truncate">
                 {link.label}
@@ -133,7 +135,7 @@ export default function NavBar() {
                   if (places.length > 0) setIsOpen(true)
                 }}
                 onBlur={() => {
-                  setTimeout(() => setIsOpen(false), 200)
+                  setTimeout(() => setIsOpen(false), DROPDOWN_CLOSE_DELAY)
                 }}
               />
               <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-2 text-muted-foreground/80 peer-disabled:opacity-50">
