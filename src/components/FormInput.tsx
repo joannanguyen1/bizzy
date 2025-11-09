@@ -1,28 +1,29 @@
 "use client";
 
 import { InputHTMLAttributes } from "react";
-import { FieldErrors, UseFormRegister } from "react-hook-form";
+import { FieldErrors, UseFormRegister, FieldPath } from "react-hook-form";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface FormInputProps<TFormValues extends Record<string, unknown>> 
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "name"> {
   label: string;
-  name: string;
-  register: UseFormRegister<any>;
-  errors: FieldErrors;
+  name: FieldPath<TFormValues>;
+  register: UseFormRegister<TFormValues>;
+  errors: FieldErrors<TFormValues>;
 }
 
 /**
  * Reusable form input component that handles labels, errors, and styling.
  * Works seamlessly with React Hook Form + Zod.
  */
-const FormInput = ({
+function FormInput<TFormValues extends Record<string, unknown>>({
   label,
   name,
   register,
   errors,
   ...rest
-}: FormInputProps) => {
+}: FormInputProps<TFormValues>) {
   const errorMessage = errors[name]?.message as string | undefined;
 
   return (
