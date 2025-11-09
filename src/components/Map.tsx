@@ -19,29 +19,42 @@ interface SelectedPlace {
   placeId?: string;
 }
 
+interface GoogleMapsPlaceResult {
+  geometry?: {
+    location: google.maps.LatLng;
+  };
+  name?: string;
+  formatted_address?: string;
+  place_id?: string;
+}
+
 export default function Map() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<any>(null);
-  const mapInstanceRef = useRef<any>(null);
+  const markerRef = useRef<google.maps.Marker | null>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const searchParams = useSearchParams();
   const placeIdFromUrl = searchParams.get("placeId");
 
-  const loadPlaceById = (placeId: string, map: any) => {
-    if (!window.google || !window.google.maps || !window.google.maps.places) return;
+  const loadPlaceById = (placeId: string, map: google.maps.Map) => {
+    if (!window.google?.maps?.places) return;
 
-    const google = window.google as any;
-    const service = new google.maps.places.PlacesService(map);
+    const maps = window.google.maps;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const PlacesService = (maps.places as any).PlacesService;
+    if (!PlacesService) return;
+    
+    const service = new PlacesService(map);
 
     service.getDetails(
       {
         placeId: placeId,
         fields: ["geometry", "name", "formatted_address", "place_id"],
       },
-      (place: any, status: string) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          if (!place.geometry || !place.geometry.location) return;
+      (place: GoogleMapsPlaceResult | null, status: string) => {
+        if (status === "OK" && place) {
+          if (!place.geometry?.location) return;
 
           // Clear old marker if exists
           if (markerRef.current) {
@@ -52,7 +65,7 @@ export default function Map() {
           map.setZoom(15);
 
           // Create and store new marker
-          markerRef.current = new google.maps.Marker({
+          markerRef.current = new maps.Marker({
             position: place.geometry.location,
             map,
             title: place.name,
@@ -74,17 +87,16 @@ export default function Map() {
 
   useEffect(() => {
     const initMap = () => {
-      if (!mapRef.current || !window.google) return;
+      if (!mapRef.current || !window.google?.maps) return;
 
-      const google = window.google as any;
-
-      const phillyCenter = { lat: 39.9526, lng: -75.1652 };
-      const phillyBounds = new google.maps.LatLngBounds(
+      const maps = window.google.maps;
+      const phillyCenter: google.maps.LatLngLiteral = { lat: 39.9526, lng: -75.1652 };
+      const phillyBounds = new maps.LatLngBounds(
         { lat: 39.86, lng: -75.30 }, // SW corner
         { lat: 40.14, lng: -74.95 }  // NE corner
       );
 
-      const map = new google.maps.Map(mapRef.current, {
+      const map = new maps.Map(mapRef.current, {
         center: phillyCenter,
         zoom: 12,
         mapTypeControl: false,
@@ -106,12 +118,12 @@ export default function Map() {
     let timeoutId: NodeJS.Timeout | null = null;
 
     // Check if Google Maps is already loaded
-    if (window.google && window.google.maps) {
+    if (window.google?.maps) {
       initMap();
     } else {
       // Wait for the script to load (NavBar loads it)
       checkGoogle = setInterval(() => {
-        if (window.google && window.google.maps) {
+        if (window.google?.maps) {
           if (checkGoogle) clearInterval(checkGoogle);
           if (timeoutId) clearTimeout(timeoutId);
           initMap();
