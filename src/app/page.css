@@ -1,0 +1,28 @@
+.hex-grid {
+  --hex-size: 90px;
+  --hex-height: 105px;
+  --hex-row: 45px;
+  --hex-offset: 45px;
+  --hex-gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .hex-grid {
+    --hex-size: 100px;
+    --hex-height: 117px;
+    --hex-row: 50.5px;
+    --hex-offset: 50.5px;
+    --hex-gap: 0.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hex-grid {
+    --hex-size: 180px;
+    --hex-height: 210px;
+    --hex-row: 90px;
+    --hex-offset: 90px;
+    --hex-gap: 1rem;
+  }
+}
+
