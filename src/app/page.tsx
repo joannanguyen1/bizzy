@@ -18,7 +18,7 @@ export default async function HomePage() {
         <section className="min-h-screen max-w-screen flex flex-col mb-10">
           <NavBar />
           <div className={cn(
-            "w-full flex flex-col items-center justify-between gap-8 px-4 pt-20",
+            "w-full flex flex-col items-center justify-between gap-8 px-4 pt-20 overflow-hidden",
             "md:flex-1 md:mx-auto md:px-4 lg:px-18 xl:px-28 2xl:px-60 md:pb-10 md:pt-0 md:flex-row"
           )}>
             <div className="w-full flex-1 flex flex-col items-start mb-10 md:mb-0">
