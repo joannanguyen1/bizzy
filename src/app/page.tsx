@@ -6,6 +6,9 @@ import Hexagon from "@/components/ui/hexagon";
 import "./page.css";
 import { cn } from "@/lib/utils";
 import { authClient } from "@/lib/auth-client";
+import { Footer } from "@/components/landing/footer";
+import BizzyLogo from "@/components/logo";
+import { GithubIcon, TwitterIcon } from "lucide-react";
 
 export default async function HomePage() {
   const { data: session } = await authClient.getSession();
@@ -57,9 +60,9 @@ export default async function HomePage() {
             </div>
 
             <div className={cn(
-                "flex-1 flex justify-center items-center",
-                "xl:max-w-[unset] lg:max-w-xl md:max-w-sm"
-              )}>
+              "flex-1 flex justify-center items-center",
+              "xl:max-w-[unset] lg:max-w-xl md:max-w-sm"
+            )}>
               <div
                 className="grid hex-grid"
                 style={{
@@ -118,6 +121,36 @@ export default async function HomePage() {
           </div>
         </section>
         <ImagesSection />
+        <Footer
+          logo={<BizzyLogo width={40} height={40} />}
+          brandName="Bizzy"
+          socialLinks={[
+            {
+              icon: <TwitterIcon className="h-5 w-5" />,
+              href: "https://twitter.com",
+              label: "Twitter",
+            },
+            {
+              icon: <GithubIcon className="h-5 w-5" />,
+              href: "https://github.com",
+              label: "GitHub",
+            },
+          ]}
+          mainLinks={[
+            { href: "/products", label: "Products" },
+            { href: "/about", label: "About" },
+            { href: "/blog", label: "Blog" },
+            { href: "/contact", label: "Contact" },
+          ]}
+          legalLinks={[
+            { href: "/privacy", label: "Privacy" },
+            { href: "/terms", label: "Terms" },
+          ]}
+          copyright={{
+            text: "© 2025 Bizzy",
+            license: "All rights reserved",
+          }}
+        />
       </main>
     </>
   );
