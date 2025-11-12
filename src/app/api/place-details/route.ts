@@ -39,11 +39,18 @@ try {
     const data = await response.json();
 
     if (data.status !== 'OK') {
-    console.error("Google API Error:", {
-        status: data.status,
-        error_message: data.error_message,
-        available_fields: data.html_attributions
-    });
+        console.error("Google API Error:", {
+            status: data.status,
+            error_message: data.error_message,
+            available_fields: data.html_attributions
+        });
+        return NextResponse.json(
+            { 
+                error: data.error_message || `Google API returned status: ${data.status}`,
+                status: data.status
+            }, 
+            { status: 400 }
+        );
     }
 
     return NextResponse.json(data);
