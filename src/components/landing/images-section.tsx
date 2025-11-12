@@ -104,7 +104,7 @@ export default function ImagesSection() {
 
 						</div>
 					</div>
-					<div className="h-[400px] w-[80vw] max-w-[600px] snap-start pl-8 lg:h-[500px] lg:w-full lg:max-w-none lg:pl-0">
+					<div className="h-[400px] w-[80vw] max-w-[600px] snap-start lg:h-[500px] lg:w-full lg:max-w-none lg:pl-0">
 						<div style={{
 							background: "radial-gradient(92.09% 124.47% at 50% 99.24%, rgba(221, 226, 238, 0.40) 58.91%, rgba(187, 197, 221, 0.40) 100%)"
 						}}
