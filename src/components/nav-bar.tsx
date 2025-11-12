@@ -25,6 +25,8 @@ const links = [
   }
 ]
 
+const DROPDOWN_CLOSE_DELAY = 200
+
 type PlaceSuggestion = google.maps.places.AutocompleteSuggestion
 
 interface ExtendedPlacePrediction extends google.maps.places.PlacePrediction {
