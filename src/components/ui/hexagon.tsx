@@ -89,6 +89,7 @@ export default function Hexagon({
 								width="173"
 								height="195"
 								preserveAspectRatio="xMidYMid slice"
+								aria-label="Image of a park skating"
 							/>
 						</pattern>
 					)}
