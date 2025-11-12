@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 
 interface PlaceDetail {
 place_id: string;
@@ -73,7 +72,7 @@ const getPriceLevel = (level?: number) => {
 };
 
 const getPhotoUrl = (photoReference: string, maxWidth: number = 400) => {
-    return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+    return `/api/place-photo?photoReference=${encodeURIComponent(photoReference)}&maxWidth=${maxWidth}`;
 };
 
 if (loading) {
@@ -135,13 +134,10 @@ return (
         <h2 className="text-xl font-semibold mb-4">Photos</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {place.photos.slice(0, 6).map((photo, index) => (
-            <Image
+            <img
                 key={index}
                 src={getPhotoUrl(photo.photo_reference)}
                 alt={`${place.name} photo ${index + 1}`}
-                fill={!(photo.width && photo.height)}
-                width={photo.width}
-                height={photo.height}
                 className="w-full h-32 object-cover rounded-lg hover:shadow-lg transition-shadow"
             />
             ))}
@@ -241,14 +237,12 @@ return (
             <div key={index} className="border-b pb-4 last:border-b-0">
                 <div className="flex items-start gap-3">
                 {review.profile_photo_url && (
-                    <Image
-                        src={review.profile_photo_url}
-                        alt={review.author_name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-full"
-                    />
-                )}
+                <img
+                    src={review.profile_photo_url}
+                    alt={review.author_name}
+                    className="w-10 h-10 rounded-full"
+                />
+            )}
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium">{review.author_name}</span>
