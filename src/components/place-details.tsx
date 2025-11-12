@@ -119,7 +119,7 @@ return (
         {place.rating && (
             <div className="text-right ml-4">
             <div className="flex items-center gap-1">
-                <span className="font-semibold text-lg">{place.rating}*</span>
+                <span className="font-semibold text-lg">{place.rating} <span role="img" aria-label="star">⭐</span></span>
             </div>
             <p className="text-sm text-gray-500">
                 ({place.user_ratings_total} reviews)
