@@ -195,7 +195,7 @@ return (
         {place.opening_hours && (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                Hou
+                Hours
             {place.opening_hours.open_now && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                 Open Now
