@@ -27,7 +27,7 @@ export default async function HomePage() {
                 <h1>Your city.</h1>
                 <h1>Your friends.</h1>
               </div>
-              <Button className="rounded-full px-6 py-6 text-base">Begin your hive</Button>
+              <Button className="rounded-lg px-6 py-6 text-base">Begin your hive</Button>
               <div className="flex flex-row items-center gap-2 lg:gap-1 mt-6">
                 <div className="flex -space-x-[0.6rem] pointer-events-none select-none">
                   <Image

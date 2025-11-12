@@ -18,27 +18,27 @@ export default function ImagesSection() {
 
 	const images = [
 		{
-			src: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing1.png',
 			alt: 'Modern architecture building',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing2.png',
 			alt: 'Urban cityscape at sunset',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing3.png',
 			alt: 'Abstract geometric pattern',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing4.png',
 			alt: 'Mountain landscape',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&h=800&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing5.png',
 			alt: 'Minimalist design elements',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
+			src: '/assets/landing6.png',
 			alt: 'Ocean waves and beach',
 		},
 		{
