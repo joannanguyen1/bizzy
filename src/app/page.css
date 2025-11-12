@@ -1,0 +1,28 @@
+.hex-grid {
+  --hex-size: 180px;
+  --hex-height: 210px;
+  --hex-row: 85px;
+  --hex-offset: 90px;
+  --hex-gap: 0.5rem;
+}
+
+@media (min-width: 768px) { /* md */
+  .hex-grid {
+    --hex-size: 150px;
+    --hex-height: 175.5px;
+    --hex-row: 70px;
+    --hex-offset: 75.75px;
+    --hex-gap: 0.5rem;
+  }
+}
+
+@media (min-width: 1024px) { /* lg */
+  .hex-grid {
+    --hex-size: 180px;
+    --hex-height: 210px;
+    --hex-row: 85px;
+    --hex-offset: 95px;
+    --hex-gap: 0.75rem;
+  }
+}
+
