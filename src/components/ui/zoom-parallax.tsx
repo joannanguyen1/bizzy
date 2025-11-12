@@ -5,7 +5,7 @@ import { useRef } from 'react';
 
 interface ZoomParallaxProps {
 	/** Array of images to be displayed in the parallax effect max 7 images */
-	images: HTMLImageElement[];
+	images: { src: string; alt: string }[];
 }
 
 export function ZoomParallax({ images }: ZoomParallaxProps) {
