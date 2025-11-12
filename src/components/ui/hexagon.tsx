@@ -15,16 +15,27 @@ export default function Hexagon({
 	videoUrl?: string;
   }) {
 	const clipId = useId()
+	const gradientId = useId()
 
-	const fillColor = hasImage && imageUrl
-	  ? "url(#hexImage)"
-	  : color === "bg-[#F59E0B]"
+	const baseColor = color === "bg-[#F59E0B]"
 		? "#F59E0B"
 		: color === "bg-amber-400"
 		  ? "#FBBF24"
 		  : color === "bg-amber-300"
 			? "#FCD34D"
 			: "#FFFFFF";
+
+	const lightColor = color === "bg-[#F59E0B]"
+		? "#FCD34D"
+		: color === "bg-amber-400"
+		  ? "#FDE68A"
+		  : color === "bg-amber-300"
+			? "#FEF3C7"
+			: "#F9FAFB";
+
+	const fillColor = hasImage && imageUrl
+	  ? "url(#hexImage)"
+	  : `url(#${gradientId})`;
 
 	const strokeColor = color === "bg-[#F59E0B]"
 	  ? "#C87E00"
@@ -81,6 +92,10 @@ export default function Hexagon({
 	  >
 		<svg viewBox="0 0 173 195" className="w-full h-full drop-shadow-md">
 		  <defs>
+			<linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+			  <stop offset="0%" stopColor={lightColor} />
+			  <stop offset="100%" stopColor={baseColor} />
+			</linearGradient>
 			{hasImage && imageUrl && (
 			  <pattern id="hexImage" x="0" y="0" width="1" height="1">
 				<image
@@ -97,8 +112,6 @@ export default function Hexagon({
 		  <path
 			d="M76.7605 3.57703C82.6664 0.141539 89.9621 0.141455 95.8679 3.57703L162.181 42.1532C168.03 45.5552 171.628 51.8104 171.628 58.576V135.991C171.628 142.757 168.03 149.013 162.181 152.415L95.8679 190.991C89.9621 194.427 82.6663 194.426 76.7605 190.991L10.446 152.415C4.59777 149.013 0.999756 142.757 0.999756 135.991V58.576C0.999892 51.8104 4.59797 45.5552 10.446 42.1532L76.7605 3.57703Z"
 			fill={fillColor}
-			stroke={hasImage ? "none" : strokeColor}
-			strokeWidth="1"
 		  />
 		</svg>
 	  </div>

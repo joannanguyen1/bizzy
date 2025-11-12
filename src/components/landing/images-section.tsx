@@ -49,7 +49,7 @@ export default function ImagesSection() {
 
 	return (
 		<section className="min-h-screen max-w-screen flex flex-col">
-			<h2 className="text-4xl text-center font-light py-20">Find the new, <span className="text-primary">forget the past.</span></h2>
+			<h2 className="text-4xl text-center font-light px-4 py-20">Find the new, <span className="text-primary">forget the past.</span></h2>
 			<ZoomParallax images={images} />
 			<div className="h-[50vh]" />
 		</section>

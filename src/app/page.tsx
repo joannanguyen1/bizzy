@@ -5,19 +5,24 @@ import Image from "next/image";
 import Hexagon from "@/components/ui/hexagon";
 import "./page.css";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { data: session } = await authClient.getSession();
+
+  console.log({ session });
+
   return (
     <>
       <main>
-        <section className="min-h-screen max-w-screen flex flex-col">
+        <section className="min-h-screen max-w-screen flex flex-col mb-10">
           <NavBar />
           <div className={cn(
-            "w-full flex-1 flex flex-col items-center justify-between gap-8 px-4 pt-20",
-            "md:mx-auto md:px-20 md:pb-10 md:pt-0 md:flex-row"
+            "w-full flex flex-col items-center justify-between gap-8 px-4 pt-20",
+            "md:flex-1 md:mx-auto md:px-4 lg:px-6 xl:px-20 md:pb-10 md:pt-0 md:flex-row"
           )}>
-            <div className="w-full sm:w-[unset] flex-1 flex flex-col items-start">
-              <div className="font-light text-4xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-6">
+            <div className="w-full flex-1 flex flex-col items-start mb-10 md:mb-0">
+              <div className="font-light text-4xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-6">
                 <h1>Your circle.</h1>
                 <h1>Your city.</h1>
                 <h1>Your friends.</h1>
@@ -51,7 +56,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="flex-1 flex justify-center items-center">
+            <div className={cn(
+                "flex-1 flex justify-center items-center",
+                "xl:max-w-[unset] lg:max-w-xl md:max-w-sm"
+              )}>
               <div
                 className="grid hex-grid"
                 style={{
