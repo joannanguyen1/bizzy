@@ -5,15 +5,23 @@ import Image from "next/image";
 import Hexagon from "@/components/ui/hexagon";
 import "./page.css";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 import { Footer } from "@/components/landing/footer";
 import BizzyLogo from "@/components/logo";
 import { GithubIcon, TwitterIcon } from "lucide-react";
+import { LoggedInLayout } from "@/components/logged-in-layout";
+import { headers } from "next/headers";
 
 export default async function HomePage() {
-  const { data: session } = await authClient.getSession();
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
 
   console.log({ session });
+
+  if (session) {
+    return <LoggedInLayout />;
+  }
 
   return (
     <>

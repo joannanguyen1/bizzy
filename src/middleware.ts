@@ -5,11 +5,7 @@ import type { NextRequest } from "next/server";
 export async function middleware(req: NextRequest) {
   const session = await auth.api.getSession(req);
 
-  console.log({ session });
-
-  if (!session) {
-    return NextResponse.redirect(new URL("/auth/signin", req.url));
-  }
+  console.log("middleware", { session });
 
   return NextResponse.next();
 }
