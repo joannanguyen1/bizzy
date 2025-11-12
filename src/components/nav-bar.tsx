@@ -188,7 +188,6 @@ export default function NavBar() {
             north: 40.14,
             east: -74.95,
           },
-          includedPrimaryTypes: ["tourist_attraction", "museum", "park", "shopping_mall", "store"],
           region: "us",
         })
 
