@@ -50,6 +50,7 @@ export default function Hexagon({
 							muted
 							playsInline
 							className="w-full h-full object-cover"
+							aria-label="Video of a park skating"
 						>
 							<source src={videoUrl} type="video/mp4" />
 						</video>
