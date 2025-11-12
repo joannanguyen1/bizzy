@@ -19,10 +19,10 @@ export default async function HomePage() {
           <NavBar />
           <div className={cn(
             "w-full flex flex-col items-center justify-between gap-8 px-4 pt-20",
-            "md:flex-1 md:mx-auto md:px-4 lg:px-6 xl:px-20 md:pb-10 md:pt-0 md:flex-row"
+            "md:flex-1 md:mx-auto md:px-4 lg:px-18 xl:px-28 2xl:px-60 md:pb-10 md:pt-0 md:flex-row"
           )}>
             <div className="w-full flex-1 flex flex-col items-start mb-10 md:mb-0">
-              <div className="font-light text-4xl sm:text-3xl md:text-4xl lg:text-4xl xl:text-5xl leading-tight mb-6">
+              <div className="font-light text-5xl md:text-4xl lg:text-4xl xl:text-5xl 2xl:text-6xl leading-tight mb-6">
                 <h1>Your circle.</h1>
                 <h1>Your city.</h1>
                 <h1>Your friends.</h1>
