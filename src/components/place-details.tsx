@@ -135,15 +135,25 @@ return (
         <h2 className="text-xl font-semibold mb-4">Photos</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {place.photos.slice(0, 6).map((photo, index) => (
-            <Image
-                key={index}
-                src={getPhotoUrl(photo.photo_reference)}
-                alt={`${place.name} photo ${index + 1}`}
-                fill={!(photo.width && photo.height)}
-                width={photo.width}
-                height={photo.height}
-                className="w-full h-32 object-cover rounded-lg hover:shadow-lg transition-shadow"
-            />
+                (photo.width && photo.height) ? (
+                    <Image
+                        key={index}
+                        src={getPhotoUrl(photo.photo_reference)}
+                        alt={`${place.name} photo ${index + 1}`}
+                        width={photo.width}
+                        height={photo.height}
+                        className="w-full h-32 object-cover rounded-lg hover:shadow-lg transition-shadow"
+                    />
+                ) : (
+                    <div key={index} className="relative w-full h-32">
+                        <Image
+                            src={getPhotoUrl(photo.photo_reference)}
+                            alt={`${place.name} photo ${index + 1}`}
+                            fill
+                            className="object-cover rounded-lg hover:shadow-lg transition-shadow"
+                        />
+                    </div>
+                )
             ))}
         </div>
         </div>
