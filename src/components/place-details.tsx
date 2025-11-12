@@ -41,30 +41,42 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
-async function fetchPlaceDetails() {
-    try {
-    setLoading(true);
-    setError(null);
-    
-    const response = await fetch(`/api/place-details?placeId=${encodeURIComponent(placeId)}`);
-        
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch place details');
+    const controller = new AbortController();
+    async function fetchPlaceDetails() {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch(
+                `/api/place-details?placeId=${encodeURIComponent(placeId)}`,
+                { signal: controller.signal }
+            );
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to fetch place details');
+            }
+
+            const data = await response.json();
+            setPlace(data.result);
+        } catch (err) {
+            if (err instanceof DOMException && err.name === "AbortError") {
+                // fetch aborted, do nothing
+                return;
+            }
+            setError(err instanceof Error ? err.message : 'Unknown error');
+        } finally {
+            setLoading(false);
+        }
     }
 
-    const data = await response.json();
-    setPlace(data.result);
-    } catch (err) {
-    setError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-    setLoading(false);
+    if (placeId) {
+        fetchPlaceDetails();
     }
-}
 
-if (placeId) {
-    fetchPlaceDetails();
-}
+    return () => {
+        controller.abort();
+    };
 }, [placeId]);
 
 const getPriceLevel = (level?: number) => {
