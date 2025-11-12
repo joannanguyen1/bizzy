@@ -41,42 +41,30 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState<string | null>(null);
 
 useEffect(() => {
-    const controller = new AbortController();
-    async function fetchPlaceDetails() {
-        try {
-            setLoading(true);
-            setError(null);
-
-            const response = await fetch(
-                `/api/place-details?placeId=${encodeURIComponent(placeId)}`,
-                { signal: controller.signal }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to fetch place details');
-            }
-
-            const data = await response.json();
-            setPlace(data.result);
-        } catch (err) {
-            if (err instanceof DOMException && err.name === "AbortError") {
-                // fetch aborted, do nothing
-                return;
-            }
-            setError(err instanceof Error ? err.message : 'Unknown error');
-        } finally {
-            setLoading(false);
-        }
+async function fetchPlaceDetails() {
+    try {
+    setLoading(true);
+    setError(null);
+    
+    const response = await fetch(`/api/place-details?placeId=${encodeURIComponent(placeId)}`);
+        
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch place details');
     }
 
-    if (placeId) {
-        fetchPlaceDetails();
+    const data = await response.json();
+    setPlace(data.result);
+    } catch (err) {
+    setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+    setLoading(false);
     }
+}
 
-    return () => {
-        controller.abort();
-    };
+if (placeId) {
+    fetchPlaceDetails();
+}
 }, [placeId]);
 
 const getPriceLevel = (level?: number) => {
@@ -131,7 +119,7 @@ return (
         {place.rating && (
             <div className="text-right ml-4">
             <div className="flex items-center gap-1">
-                <span className="font-semibold text-lg">{place.rating} <span role="img" aria-label="star">⭐</span></span>
+                <span className="font-semibold text-lg">{place.rating}*</span>
             </div>
             <p className="text-sm text-gray-500">
                 ({place.user_ratings_total} reviews)
@@ -147,25 +135,15 @@ return (
         <h2 className="text-xl font-semibold mb-4">Photos</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {place.photos.slice(0, 6).map((photo, index) => (
-                (photo.width && photo.height) ? (
-                    <Image
-                        key={index}
-                        src={getPhotoUrl(photo.photo_reference)}
-                        alt={`${place.name} photo ${index + 1}`}
-                        width={photo.width}
-                        height={photo.height}
-                        className="w-full h-32 object-cover rounded-lg hover:shadow-lg transition-shadow"
-                    />
-                ) : (
-                    <div key={index} className="relative w-full h-32">
-                        <Image
-                            src={getPhotoUrl(photo.photo_reference)}
-                            alt={`${place.name} photo ${index + 1}`}
-                            fill
-                            className="object-cover rounded-lg hover:shadow-lg transition-shadow"
-                        />
-                    </div>
-                )
+            <Image
+                key={index}
+                src={getPhotoUrl(photo.photo_reference)}
+                alt={`${place.name} photo ${index + 1}`}
+                fill={!(photo.width && photo.height)}
+                width={photo.width}
+                height={photo.height}
+                className="w-full h-32 object-cover rounded-lg hover:shadow-lg transition-shadow"
+            />
             ))}
         </div>
         </div>
@@ -221,7 +199,7 @@ return (
         {place.opening_hours && (
         <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                Hours
+                Hou
             {place.opening_hours.open_now && (
                 <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                 Open Now

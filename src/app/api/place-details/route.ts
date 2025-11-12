@@ -44,15 +44,6 @@ try {
         error_message: data.error_message,
         available_fields: data.html_attributions
     });
-    
-    return NextResponse.json({ 
-        error: `Google Places API error: ${data.status}`, 
-        details: data.error_message || 'No additional details provided',
-        debug: {
-        placeId,
-        apiResponse: data
-        }
-    }, { status: 500 });
     }
 
     return NextResponse.json(data);
