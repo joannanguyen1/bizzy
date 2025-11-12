@@ -16,12 +16,7 @@ function MapContent() {
       </div>
       
       {placeId && (
-        <div
-          className="lg:w-1/2 p-6 overflow-y-auto max-h-screen bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-700"
-          tabIndex={0}
-          role="region"
-          aria-label="Place details"
-        >
+        <div className="lg:w-1/2 p-6 overflow-y-auto max-h-screen bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-700">
           <PlaceDetails placeId={placeId} />
         </div>
       )}
