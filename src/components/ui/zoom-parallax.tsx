@@ -1,17 +1,11 @@
 'use client';
 
 import { useScroll, useTransform, motion } from 'framer-motion';
-import Image from 'next/image';
 import { useRef } from 'react';
-
-interface Image {
-	src: string;
-	alt?: string;
-}
 
 interface ZoomParallaxProps {
 	/** Array of images to be displayed in the parallax effect max 7 images */
-	images: Image[];
+	images: HTMLImageElement[];
 }
 
 export function ZoomParallax({ images }: ZoomParallaxProps) {
