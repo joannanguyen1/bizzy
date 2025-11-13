@@ -104,7 +104,6 @@ MobileNavToggle.displayName = "MobileNavToggle";
 
 interface MobileNavMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   isOpen: boolean;
-  onClose: () => void;
 }
 
 const MobileNavMenu = React.forwardRef<

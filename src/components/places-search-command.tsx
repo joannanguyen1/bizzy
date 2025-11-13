@@ -143,7 +143,13 @@ export default function PlacesSearchCommand() {
                 return (
                   <CommandItem
                     key={prediction.placeId}
-                    onSelect={() => handleSelectPlace(prediction.placeId!)}
+                    onSelect={() => {
+                      if (prediction.placeId) {
+                        handleSelectPlace(prediction.placeId)
+                      } else {
+                        setSearchQuery(prediction.text?.text || "")
+                      }
+                    }}
                     className="cursor-pointer"
                   >
                     <MapPinIcon className="mr-2 h-4 w-4" />

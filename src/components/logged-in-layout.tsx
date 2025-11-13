@@ -39,6 +39,7 @@ interface LoggedInLayoutProps {
 }
 
 function getInitials(name: string) {
+  if (!name) return "US";
   return name
     .split(" ")
     .map((n) => n[0])
@@ -143,7 +144,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
           <div>
             <DropdownMenu onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent w-full">
+                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent w-full" aria-label="User menu">
                   <div className="flex items-center gap-2 w-full">
                     <UserAvatar user={session.user} />
                     <motion.div

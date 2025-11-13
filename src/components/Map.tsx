@@ -44,7 +44,7 @@ interface MapProps {
   placeId?: string;
 }
 
-export default function Map({ placeId }: MapProps = {}) {
+export default function Map({ placeId = undefined }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
