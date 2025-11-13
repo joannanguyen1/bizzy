@@ -2,17 +2,82 @@
 
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import BizzyLogo from "@/components/logo";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import BoringAvatar from "boring-avatars";
+import { Session, User } from "better-auth/types";
 
-export function LoggedInLayout() {
+const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
+
+interface LoggedInLayoutProps {
+  session: {
+    session: Session;
+    user: User;
+  };
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+const UserAvatar = React.memo(({ user }: { user: User }) => {
+  if (user.image) {
+    return (
+      <Avatar className="h-8 w-8">
+        <AvatarImage
+          src={user.image}
+          alt={user.name}
+        />
+        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  return (
+    <div className="rounded-full overflow-hidden shrink-0">
+      <BoringAvatar
+        name={user.name}
+        variant="marble"
+        colors={AVATAR_COLORS}
+        size={32}
+        square={false}
+        className="size-7"
+      />
+    </div>
+  );
+});
+
+UserAvatar.displayName = "UserAvatar";
+
+export function LoggedInLayout({ session }: LoggedInLayoutProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleLogout = async () => {
     await authClient.signOut({
@@ -30,33 +95,24 @@ export function LoggedInLayout() {
       label: "Dashboard",
       href: "#",
       icon: (
-        <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
       label: "Profile",
       href: "#",
       icon: (
-        <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
       label: "Settings",
       href: "#",
       icon: (
-        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
   ];
-
-  const logoutLink = {
-    label: "Logout",
-    href: "#",
-    icon: (
-      <LogOut className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
-    ),
-    onClick: handleLogout,
-  };
 
   return (
     <div
@@ -65,30 +121,83 @@ export function LoggedInLayout() {
         "h-screen"
       )}
     >
-      <Sidebar open={open} setOpen={setOpen}>
+      <Sidebar open={open} setOpen={dropdownOpen ? () => {} : setOpen}>
         <SidebarBody className="justify-between gap-10">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
-            {open ? <Logo /> : <LogoIcon />}
+            <Logo open={open} />
             <div className="mt-8 flex flex-col gap-2">
               {links.map((link, idx) => (
                 <SidebarLink key={idx} link={link} />
               ))}
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-start gap-2 group/sidebar py-2 text-left"
-              >
-                {logoutLink.icon}
-                <motion.span
-                  animate={{
-                    display: open ? "inline-block" : "none",
-                    opacity: open ? 1 : 0,
-                  }}
-                  className="text-neutral-700 dark:text-neutral-200 text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
-                >
-                  {logoutLink.label}
-                </motion.span>
-              </button>
             </div>
+          </div>
+          <div>
+            <DropdownMenu onOpenChange={setDropdownOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent w-full">
+                  <div className="flex items-center gap-2 w-full">
+                    <UserAvatar user={session.user} />
+                    <motion.div
+                      animate={{
+                        display: open ? "flex" : "none",
+                        opacity: open ? 1 : 0,
+                      }}
+                      className="flex items-center justify-between flex-1"
+                    >
+                      <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-28">
+                        {session.user.name}
+                      </span>
+                      <ChevronDownIcon
+                        size={16}
+                        className="opacity-60 text-neutral-700 dark:text-neutral-200"
+                        aria-hidden="true"
+                      />
+                    </motion.div>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="max-w-64" align="end" side="top">
+                <DropdownMenuLabel className="flex min-w-0 flex-col">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {session.user.name}
+                  </span>
+                  <span className="truncate text-xs font-normal text-muted-foreground">
+                    {session.user.email}
+                  </span>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <BoltIcon size={16} className="opacity-60" aria-hidden="true" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Layers2Icon size={16} className="opacity-60" aria-hidden="true" />
+                    <span>Projects</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <BookOpenIcon size={16} className="opacity-60" aria-hidden="true" />
+                    <span>Documentation</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem>
+                    <PinIcon size={16} className="opacity-60" aria-hidden="true" />
+                    <span>Favorites</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
+                    <span>Edit Profile</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOutIcon size={16} className="opacity-60" aria-hidden="true" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </SidebarBody>
       </Sidebar>
@@ -97,34 +206,37 @@ export function LoggedInLayout() {
   );
 }
 
-export const Logo = () => {
+const LogoIcon = React.memo(() => (
+  <div className="w-6 h-6 shrink-0">
+    <BizzyLogo width={24} height={24} />
+  </div>
+));
+
+LogoIcon.displayName = "LogoIcon";
+
+export const Logo = React.memo(({ open }: { open: boolean }) => {
   return (
     <Link
       href="#"
-      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+      className="font-normal flex items-center gap-2 text-sm text-black py-1 relative z-20"
     >
-      <BizzyLogo width={24} height={24} />
+      <LogoIcon />
       <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-medium text-black dark:text-white whitespace-pre"
+        animate={{
+          display: open ? "inline-block" : "none",
+          opacity: open ? 1 : 0,
+          width: open ? "auto" : 0,
+        }}
+        transition={{ duration: 0.15, ease: "easeInOut" }}
+        className="font-medium text-black dark:text-white whitespace-nowrap overflow-hidden"
       >
         Bizzy
       </motion.span>
     </Link>
   );
-};
+});
 
-export const LogoIcon = () => {
-  return (
-    <Link
-      href="#"
-      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
-    >
-      <BizzyLogo width={24} height={24} />
-    </Link>
-  );
-};
+Logo.displayName = "Logo";
 
 const Dashboard = () => {
   return (

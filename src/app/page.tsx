@@ -20,7 +20,7 @@ export default async function HomePage() {
   console.log({ session });
 
   if (session) {
-    return <LoggedInLayout />;
+    return <LoggedInLayout session={session} />;
   }
 
   return (
