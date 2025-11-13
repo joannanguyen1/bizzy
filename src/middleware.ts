@@ -7,9 +7,13 @@ export async function middleware(req: NextRequest) {
 
   console.log("middleware", { session });
 
+  if (!session) {
+    return NextResponse.redirect(new URL("/auth/signin", req.url));
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/map", "/dashboard/:path*", "/profile/:path*"],
 };
