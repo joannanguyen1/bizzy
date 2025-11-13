@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 const sfPro = localFont({
   src: [
@@ -49,6 +50,7 @@ export default function RootLayout({
       <body
         className={`${sfPro.variable} antialiased`}
       >
+        <NextTopLoader color="#F59E0B" height={2} showSpinner={false} />
         {children}
         <Toaster />
       </body>

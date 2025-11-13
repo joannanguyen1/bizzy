@@ -12,6 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+import Link from "next/link"
 
 type PlaceSuggestion = google.maps.places.AutocompleteSuggestion
 
@@ -143,24 +144,19 @@ export default function PlacesSearchCommand() {
                 return (
                   <CommandItem
                     key={prediction.placeId}
-                    onSelect={() => {
-                      if (prediction.placeId) {
-                        handleSelectPlace(prediction.placeId)
-                      } else {
-                        setSearchQuery(prediction.text?.text || "")
-                      }
-                    }}
-                    className="cursor-pointer"
+                    asChild
                   >
-                    <MapPinIcon className="mr-2 h-4 w-4" />
-                    <div className="flex flex-col">
-                      <span>{prediction.structuredFormat?.mainText?.text || prediction.text?.text || ""}</span>
-                      {prediction.structuredFormat?.secondaryText?.text && (
-                        <span className="text-xs text-muted-foreground">
-                          {prediction.structuredFormat.secondaryText.text}
-                        </span>
-                      )}
-                    </div>
+                    <Link href={`/map/places/${encodeURIComponent(prediction.placeId)}`} className="cursor-pointer items-start">
+                      <MapPinIcon className="mr-2 size-4" />
+                      <div className="flex flex-col">
+                        <span>{prediction.structuredFormat?.mainText?.text || prediction.text?.text || ""}</span>
+                        {prediction.structuredFormat?.secondaryText?.text && (
+                          <span className="text-xs text-muted-foreground">
+                            {prediction.structuredFormat.secondaryText.text}
+                          </span>
+                        )}
+                      </div>
+                    </Link>
                   </CommandItem>
                 )
               })}
