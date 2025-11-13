@@ -130,7 +130,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
         "h-screen"
       )}
     >
-      <Sidebar open={open} setOpen={dropdownOpen ? () => {} : setOpen}>
+      <Sidebar open={open} setOpen={dropdownOpen ? undefined : setOpen}>
         <SidebarBody className="justify-between gap-10">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
             <Logo open={open} />
