@@ -121,6 +121,7 @@ export const MobileSidebar = ({
           <Menu
             className="text-neutral-800 dark:text-neutral-200 cursor-pointer"
             onClick={() => setOpen(!open)}
+            aria-label="Open navigation menu"
           />
         </div>
         <AnimatePresence>
@@ -141,6 +142,7 @@ export const MobileSidebar = ({
               <div
                 className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200 cursor-pointer"
                 onClick={() => setOpen(!open)}
+                aria-label="Close navigation menu"
               >
                 <X />
               </div>

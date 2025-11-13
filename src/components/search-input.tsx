@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
-import { SearchIcon, MicIcon, MapPinIcon } from "lucide-react";
+import { SearchIcon, MapPinIcon } from "lucide-react";
 
 const DROPDOWN_CLOSE_DELAY = 200;
 
@@ -61,13 +61,6 @@ const SearchInput = ({
 		<div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-2 text-muted-foreground/80 peer-disabled:opacity-50">
 			<SearchIcon size={16} />
 		</div>
-		<button
-			className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 transition-[color,box-shadow] outline-none hover:text-foreground focus:z-10 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
-			aria-label="Press to speak"
-			type="button"
-		>
-			<MicIcon size={16} aria-hidden="true" />
-		</button>
 
 		{isOpen && (
 			<div className="absolute top-full mt-1 w-full bg-popover border rounded-md shadow-md z-50 max-h-[300px] overflow-y-auto">

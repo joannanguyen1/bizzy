@@ -7,7 +7,9 @@ const nextConfig: NextConfig = {
       "lh3.googleusercontent.com",
     ],
   },
-  devIndicators: false
+  devIndicators: {
+    position: "bottom-right"
+  }
 };
 
 export default nextConfig;
