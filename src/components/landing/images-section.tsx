@@ -21,31 +21,31 @@ export default function ImagesSection() {
 	const images = [
 		{
 			src: '/assets/landing1.png',
-			alt: 'Modern architecture building',
+			alt: 'Women holding shopping bags',
 		},
 		{
 			src: '/assets/landing2.png',
-			alt: 'Urban cityscape at sunset',
+			alt: 'Rowing',
 		},
 		{
 			src: '/assets/landing3.png',
-			alt: 'Abstract geometric pattern',
+			alt: 'Friends on top of building',
 		},
 		{
 			src: '/assets/landing4.png',
-			alt: 'Mountain landscape',
+			alt: 'Selfie at a mall',
 		},
 		{
 			src: '/assets/landing5.png',
-			alt: 'Minimalist design elements',
+			alt: 'Museum',
 		},
 		{
 			src: '/assets/landing6.png',
-			alt: 'Ocean waves and beach',
+			alt: 'Ice Skating',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-			alt: 'Forest trees and sunlight',
+			src: '/assets/landing7.png',
+			alt: 'Philadelphia Trail Club',
 		},
 	];
 
@@ -55,7 +55,7 @@ export default function ImagesSection() {
 			<ZoomParallax images={images} />
 			<div className="h-auto min-h-[50vh] flex flex-col items-center justify-center py-20 px-8">
 				<h2 className="text-4xl text-center font-light py-20">Bizzy is more than just a platform, <span className="text-primary">it&apos;s a community.</span></h2>
-				<div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-2 lg:grid-rows-2 gap-8 w-full max-w-7xl">
+				<div className="grid grid-cols-1 grid-rows-1 lg:grid-cols-2 lg:grid-rows-2 gap-8 w-full max-w-7xl justify-items-center">
 					<div className="rounded-md h-[400px] w-[80vw] max-w-[600px] snap-start lg:h-auto lg:w-full lg:max-w-none lg:pl-0 ">
 						<div
 							style={{
@@ -141,7 +141,7 @@ export default function ImagesSection() {
 												<p className="text-sm font-medium">Please Touch Museum</p>
 												<p className="text-xs text-neutral-500">Philadelphia, PA</p>
 												<div className="flex flex-row items-center gap-1">
-													<BookmarkIcon className="size-6 fill-current stroke-1" />
+													<BookmarkIcon className="size-6 text-neutral-400 fill-current stroke-1" />
 													<XIcon className="size-4 text-neutral-300 stroke-1" />
 												</div>
 											</div>
@@ -159,7 +159,7 @@ export default function ImagesSection() {
 												<p className="text-sm font-medium">Museum of Art</p>
 												<p className="text-xs text-neutral-500">Philadelphia, PA</p>
 												<div className="flex flex-row items-center gap-1">
-													<BookmarkIcon className="size-6 fill-current stroke-1" />
+													<BookmarkIcon className="size-6 text-neutral-400 fill-current stroke-1" />
 													<XIcon className="size-4 text-neutral-300 stroke-1" />
 												</div>
 											</div>

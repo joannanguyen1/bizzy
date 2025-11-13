@@ -11,7 +11,7 @@ const Navbar = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}
+    className={cn("sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60", className)}
     {...props}
   />
 ));
@@ -104,13 +104,13 @@ MobileNavToggle.displayName = "MobileNavToggle";
 
 interface MobileNavMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   isOpen: boolean;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const MobileNavMenu = React.forwardRef<
   HTMLDivElement,
   MobileNavMenuProps
->(({ className, isOpen, onClose, children, ...props }, ref) => {
+>(({ className, isOpen, children, ...props }, ref) => {
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";

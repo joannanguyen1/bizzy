@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       "maps.googleapis.com",
       "lh3.googleusercontent.com",
     ],
+  },
+  devIndicators: {
+    position: "bottom-right"
   }
 };
 

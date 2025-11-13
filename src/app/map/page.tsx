@@ -1,37 +1,22 @@
-"use client";
 import { Suspense } from "react";
-import { useSearchParams } from 'next/navigation';
-import Map from "@/components/Map";
-import NavBar from "@/components/nav-bar";
-import PlaceDetails from "@/components/place-details";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import MapPageClient from "./map-page-client";
 
-function MapContent() {
-  const searchParams = useSearchParams();
-  const placeId = searchParams.get('placeId');
+export default async function MapPage() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+
+  if (!session) {
+    redirect("/auth/signin");
+  }
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row">
-      <div className={`flex items-center justify-center p-10 ${placeId ? 'lg:w-1/2' : 'w-full'}`}>
-        <Map />
-      </div>
-      
-      {placeId && (
-        <div className="lg:w-1/2 p-6 overflow-y-auto max-h-screen bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-700">
-          <PlaceDetails placeId={placeId} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function MapPage() {
-  return (
-    <main className="min-h-screen bg-zinc-50 dark:bg-black text-black dark:text-white flex flex-col">
-      <NavBar />
-      <Suspense fallback={<div className="flex-1 flex items-center justify-center">Loading map...</div>}>
-        <MapContent />
-      </Suspense>
-    </main>
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <MapPageClient session={session} />
+    </Suspense>
   );
 }
 

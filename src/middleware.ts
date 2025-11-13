@@ -5,8 +5,6 @@ import type { NextRequest } from "next/server";
 export async function middleware(req: NextRequest) {
   const session = await auth.api.getSession(req);
 
-  console.log({ session });
-
   if (!session) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
   }
@@ -14,6 +12,7 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// TODO: Correctly route middleware to pages that are auth only
 export const config = {
-  matcher: ["/"],
+  matcher: ["/map", "/dashboard/:path*", "/profile/:path*"],
 };

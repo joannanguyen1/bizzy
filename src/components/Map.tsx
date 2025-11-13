@@ -1,7 +1,6 @@
 "use client";
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -41,14 +40,16 @@ interface PlacesNamespace {
   PlacesService: PlacesServiceConstructor;
 }
 
-export default function Map() {
+interface MapProps {
+  placeId?: string;
+}
+
+export default function Map({ placeId = undefined }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const searchParams = useSearchParams();
-  const placeIdFromUrl = searchParams.get("placeId");
 
   const loadPlaceById = (placeId: string, map: google.maps.Map) => {
     if (!window.google?.maps?.places) return;
@@ -58,7 +59,7 @@ export default function Map() {
     const placesNamespace = maps.places as unknown as PlacesNamespace;
     const PlacesServiceConstructor = placesNamespace.PlacesService;
     if (!PlacesServiceConstructor) return;
-    
+
     const service = new PlacesServiceConstructor(map);
 
     service.getDetails(
@@ -119,8 +120,8 @@ export default function Map() {
 
       mapInstanceRef.current = map;
 
-      if (placeIdFromUrl) {
-        loadPlaceById(placeIdFromUrl, map);
+      if (placeId) {
+        loadPlaceById(placeId, map);
       }
     };
 
@@ -147,7 +148,7 @@ export default function Map() {
       if (checkGoogle) clearInterval(checkGoogle);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [placeIdFromUrl]);
+  }, [placeId]);
 
   const handleAddPlace = async () => {
     if (!selectedPlace) return;
@@ -155,7 +156,7 @@ export default function Map() {
     setIsSaving(true);
     try {
       const session = await authClient.getSession();
-      
+
       if (!session?.data?.user) {
         toast.error("You must be logged in to save places");
         return;
@@ -187,7 +188,7 @@ export default function Map() {
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
       <div ref={mapRef} className="w-full h-[600px] rounded-lg shadow-lg" />
-      
+
       {selectedPlace && (
         <div className="w-3/4 mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg">
           <h3 className="text-lg font-semibold mb-2 text-black dark:text-white">
