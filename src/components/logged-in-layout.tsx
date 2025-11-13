@@ -93,6 +93,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     });
   };
 
+  // TODO: Correctly route links to the correct pages
   const links = [
     {
       label: "Dashboard",
@@ -177,6 +178,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
+                  {/** TODO: Correctly route links to the correct pages */}
                   <DropdownMenuItem>
                     <BoltIcon size={16} className="opacity-60" aria-hidden="true" />
                     <span>Dashboard</span>

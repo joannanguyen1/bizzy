@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import Link, { LinkProps } from "next/link";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { MenuIcon, XIcon } from "lucide-react";
+import { Button } from "./button";
 
 interface Links {
   label: string;
@@ -118,11 +119,9 @@ export const MobileSidebar = ({
         {...props}
       >
         <div className="flex justify-end z-20 w-full">
-          <Menu
-            className="text-neutral-800 dark:text-neutral-200 cursor-pointer"
-            onClick={() => setOpen(!open)}
-            aria-label="Open navigation menu"
-          />
+          <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+            <MenuIcon className="text-neutral-800 dark:text-neutral-200 cursor-pointer" aria-label="Open navigation menu" />
+          </Button>
         </div>
         <AnimatePresence>
           {open && (
@@ -139,13 +138,9 @@ export const MobileSidebar = ({
                 className
               )}
             >
-              <div
-                className="absolute right-10 top-10 z-50 text-neutral-800 dark:text-neutral-200 cursor-pointer"
-                onClick={() => setOpen(!open)}
-                aria-label="Close navigation menu"
-              >
-                <X />
-              </div>
+              <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+                <XIcon className="text-neutral-800 dark:text-neutral-200" aria-label="Close navigation menu" />
+              </Button>
               {children}
             </motion.div>
           )}
