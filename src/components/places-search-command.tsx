@@ -96,7 +96,7 @@ export default function PlacesSearchCommand() {
   }, [searchQuery]);
 
   const handleSelectPlace = (placeId: string) => {
-    router.push(`/map?placeId=${encodeURIComponent(placeId)}`)
+    router.push(`/map/places/${encodeURIComponent(placeId)}`)
     setOpen(false)
     setSearchQuery("")
   }

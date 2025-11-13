@@ -86,7 +86,7 @@ const SearchInput = ({
 									className="w-full flex items-start gap-2 px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer text-left"
 									onClick={() => {
 										if (prediction.placeId) {
-											router.push(`/map?placeId=${encodeURIComponent(prediction.placeId)}`)
+											router.push(`/map/places/${encodeURIComponent(prediction.placeId)}`)
 											setIsOpen(false)
 											setSearchQuery("")
 											setIsMobileMenuOpen?.(false)

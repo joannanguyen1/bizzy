@@ -1,19 +1,21 @@
 "use client";
 
 import Map from "@/components/Map";
+import PlaceDetails from "@/components/place-details";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { Session, User } from "better-auth/types";
 import PlacesSearchCommand from "@/components/places-search-command";
 import Script from "next/script";
 
-interface MapPageClientProps {
+interface MapPlaceClientProps {
   session: {
     session: Session;
     user: User;
   };
+  placeId: string;
 }
 
-export default function MapPageClient({ session }: MapPageClientProps) {
+export default function MapPlaceClient({ session, placeId }: MapPlaceClientProps) {
   return (
     <>
       <Script
@@ -28,8 +30,14 @@ export default function MapPageClient({ session }: MapPageClientProps) {
               <PlacesSearchCommand />
             </div>
 
-            <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
-              <Map />
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+              <div className="flex items-center justify-center p-4 lg:w-1/2 overflow-hidden">
+                <Map placeId={placeId} />
+              </div>
+
+              <div className="lg:w-1/2 p-6 overflow-y-auto bg-gray-50 dark:bg-neutral-800 border-l border-neutral-200 dark:border-neutral-700">
+                <PlaceDetails placeId={placeId} />
+              </div>
             </div>
           </div>
         </div>

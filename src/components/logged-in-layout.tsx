@@ -226,7 +226,7 @@ LogoIcon.displayName = "LogoIcon";
 export const Logo = React.memo(({ open }: { open: boolean }) => {
   return (
     <Link
-      href="#"
+      href="/"
       className="font-normal flex items-center gap-2 text-sm text-black py-1 relative z-20"
     >
       <LogoIcon />
