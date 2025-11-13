@@ -21,31 +21,31 @@ export default function ImagesSection() {
 	const images = [
 		{
 			src: '/assets/landing1.png',
-			alt: 'Modern architecture building',
+			alt: 'Women holding shopping bags',
 		},
 		{
 			src: '/assets/landing2.png',
-			alt: 'Urban cityscape at sunset',
+			alt: 'Rowing',
 		},
 		{
 			src: '/assets/landing3.png',
-			alt: 'Abstract geometric pattern',
+			alt: 'Friends on top of building',
 		},
 		{
 			src: '/assets/landing4.png',
-			alt: 'Mountain landscape',
+			alt: 'Selfie at a mall',
 		},
 		{
 			src: '/assets/landing5.png',
-			alt: 'Minimalist design elements',
+			alt: 'Museum',
 		},
 		{
 			src: '/assets/landing6.png',
-			alt: 'Ocean waves and beach',
+			alt: 'Ice Skating',
 		},
 		{
-			src: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1280&h=720&fit=crop&crop=entropy&auto=format&q=80',
-			alt: 'Forest trees and sunlight',
+			src: '/assets/landing7.png',
+			alt: 'Philadelphia Trail Club',
 		},
 	];
 
