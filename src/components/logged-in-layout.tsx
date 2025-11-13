@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon, MapPinIcon } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import BoringAvatar from "boring-avatars";
 import { Session, User } from "better-auth/types";
+import PlacesSearchCommand from "@/components/places-search-command";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -34,6 +35,7 @@ interface LoggedInLayoutProps {
     session: Session;
     user: User;
   };
+  children?: React.ReactNode;
 }
 
 function getInitials(name: string) {
@@ -74,7 +76,7 @@ const UserAvatar = React.memo(({ user }: { user: User }) => {
 
 UserAvatar.displayName = "UserAvatar";
 
-export function LoggedInLayout({ session }: LoggedInLayoutProps) {
+export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -93,9 +95,16 @@ export function LoggedInLayout({ session }: LoggedInLayoutProps) {
   const links = [
     {
       label: "Dashboard",
-      href: "#",
+      href: "/",
       icon: (
         <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Map",
+      href: "/map",
+      icon: (
+        <MapPinIcon className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
     {
@@ -201,7 +210,7 @@ export function LoggedInLayout({ session }: LoggedInLayoutProps) {
           </div>
         </SidebarBody>
       </Sidebar>
-      <Dashboard />
+      {children || <Dashboard />}
     </div>
   );
 }
@@ -242,6 +251,9 @@ const Dashboard = () => {
   return (
     <div className="flex flex-1">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full">
+        <div className="flex items-center justify-start p-4 border-b border-neutral-200 dark:border-neutral-700">
+          <PlacesSearchCommand />
+        </div>
         <div className="flex items-center justify-center h-full">
           <h1 className="text-4xl font-light text-neutral-800 dark:text-neutral-200">
             logged in
