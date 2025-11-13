@@ -82,6 +82,13 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const handleDropdownChange = (isOpen: boolean) => {
+    setDropdownOpen(isOpen);
+    if (!isOpen) {
+      setOpen(false);
+    }
+  };
+
   const handleLogout = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -143,7 +150,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
             </div>
           </div>
           <div>
-            <DropdownMenu onOpenChange={setDropdownOpen}>
+            <DropdownMenu onOpenChange={handleDropdownChange}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-auto p-0 hover:bg-transparent w-full" aria-label="User menu">
                   <div className="flex items-center gap-2 w-full">
