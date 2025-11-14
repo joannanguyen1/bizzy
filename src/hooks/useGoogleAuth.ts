@@ -27,13 +27,6 @@ export function useGoogleAuth() {
           },
         },
       });
-    } catch (err) {
-      console.error("Google auth error:", err);
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "An unexpected error occurred during Google authentication."
-      );
     } finally {
       setIsGoogleLoading(false);
     }
