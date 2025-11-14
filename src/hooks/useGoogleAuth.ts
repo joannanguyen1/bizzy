@@ -30,8 +30,8 @@ export function useGoogleAuth() {
     } catch (err) {
       console.error("Google auth error:", err);
       toast.error(
-        err && typeof err === "object" && "message" in err
-          ? (err as any).message
+        err instanceof Error
+          ? err.message
           : "An unexpected error occurred during Google authentication."
       );
     } finally {
