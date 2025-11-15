@@ -118,7 +118,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     },
     {
       label: "Profile",
-      href: "#",
+      href: `/profile/${session.user.id}`,
       icon: (
         <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
@@ -205,9 +205,11 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                     <PinIcon size={16} className="opacity-60" aria-hidden="true" />
                     <span>Favorites</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
-                    <span>Edit Profile</span>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${session.user.id}`} className="flex items-center gap-2">
+                      <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
+                      <span>View Profile</span>
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
