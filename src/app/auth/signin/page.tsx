@@ -1,15 +1,19 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { toast } from "sonner";
+
 import FormInput from "@/components/FormInput";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-
-import { toast } from "sonner";
-import Link from "next/link";
+import BizzyLogo from "@/components/logo";
 import { authClient } from "@/lib/auth-client";
+import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import GoogleIcon from "@/components/GoogleIcon";
 
 const SignInSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
@@ -20,6 +24,7 @@ type SignInForm = z.infer<typeof SignInSchema>;
 
 const SignInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { isGoogleLoading, signInWithGoogle } = useGoogleAuth();
   const {
     register,
     handleSubmit,
@@ -58,10 +63,24 @@ const SignInPage = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-full">
-      <div className="max-w-md mx-auto w-full p-6 border rounded-lg shadow-lg">
-        <h1 className="text-2xl font-bold text-center mb-6">Sign In</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
+    <section className="flex min-h-screen items-center justify-center bg-white px-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full max-w-md mx-auto p-8"
+      >
+        <div className="text-center">
+          <Link href="/" aria-label="Go home" className="mx-auto block w-fit">
+            <BizzyLogo width={54} height={54} />
+          </Link>
+          <h1 className="mb-1 mt-6 text-2xl font-semibold text-zinc-900">
+            Log in to your account
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Welcome back! Please enter your details.
+          </p>
+        </div>
+
+        <div className="mt-8 space-y-4">
           <FormInput
             label="Email"
             name="email"
@@ -77,23 +96,57 @@ const SignInPage = () => {
             errors={errors}
           />
 
+          <div className="flex items-center justify-between text-xs text-zinc-600">
+            <label htmlFor="remember" className="flex cursor-pointer items-center gap-2">
+              <input
+                id="remember"
+                type="checkbox"
+                className="h-4 w-4 rounded border border-zinc-300"
+              />
+              <span>Remember for 30 days</span>
+            </label>
+            <Link
+              href="/auth/forgot-password"
+              className="text-amber-600 hover:underline"
+            >
+              Forgot password
+            </Link>
+          </div>
+
           <Button
             type="submit"
-            variant="default"
-            className="w-full mt-4"
-            disabled={isLoading}
+            className="w-full bg-amber-500 text-white hover:bg-amber-600"
+            disabled={isLoading || isGoogleLoading}
           >
-            {isLoading ? "Signing In..." : "Sign In"}
+            {isLoading ? "Signing in..." : "Sign in"}
           </Button>
-        </form>
-        <div className="flex items-center gap-1 text-[.8rem] mt-2">
-          <p>need to create an account?</p>
-          <Link href="/auth/register" className="text-blue-400">
-            Sign up.
-          </Link>
         </div>
-      </div>
-    </div>
+
+        <div className="mt-4">
+          <Button
+              type="button"
+              variant="outline"
+              className="flex w-full items-center justify-center gap-2 bg-white"
+              onClick={signInWithGoogle}
+              disabled={isLoading || isGoogleLoading}
+            >
+              <GoogleIcon className="h-4 w-4" />
+              <span>
+                {isGoogleLoading ? "Redirecting..." : "Sign in with Google"}
+              </span>
+          </Button>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-center text-sm text-zinc-600">
+            Don&apos;t have an account?
+            <Button asChild variant="link" className="px-2 text-amber-600">
+              <Link href="/auth/register">Sign up</Link>
+            </Button>
+          </p>
+        </div>
+      </form>
+    </section>
   );
 };
 
