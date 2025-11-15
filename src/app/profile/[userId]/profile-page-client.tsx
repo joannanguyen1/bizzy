@@ -241,7 +241,7 @@ export default function ProfilePageClient({
               }
 
               return (
-                <div key={place.id} className="relative" style={{ zIndex: 1 }}>
+                <div key={place.id} className="relative z-[1]">
                   {cardContent}
                 </div>
               );
