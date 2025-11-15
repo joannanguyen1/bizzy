@@ -233,8 +233,7 @@ export default function ProfilePageClient({
                   <Link
                     key={place.id}
                     href={`/map/places/${encodeURIComponent(placeIdValue)}`}
-                    className="block w-full no-underline relative"
-                    style={{ zIndex: 1, pointerEvents: 'auto' }}
+                    className="block w-full no-underline relative z-[1] pointer-events-auto"
                   >
                     {cardContent}
                   </Link>
