@@ -117,7 +117,7 @@ export default function Map({ placeId = undefined }: MapProps) {
 
           setSelectedPlace(loadedPlace);
 
-          if (place.place_id && place.place_id !== placeId) {
+          if (place.place_id) {
             checkIfPlaceIsSaved(place.place_id);
           }
         }
