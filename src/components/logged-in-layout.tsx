@@ -208,7 +208,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                   <DropdownMenuItem asChild>
                     <Link href={`/profile/${session.user.id}`} className="flex items-center gap-2">
                       <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
-                      <span>View Profile</span>
+                      <span>My Profile</span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
