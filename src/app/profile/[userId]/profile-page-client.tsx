@@ -86,11 +86,13 @@ export default function ProfilePageClient({
         const fetchedPlaces = placesData.places || [];
         
         // Debug: Log places to check placeId values
-        console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
-          name: p.name,
-          placeId: p.placeId,
-          hasPlaceId: Boolean(p.placeId && typeof p.placeId === 'string' && p.placeId.trim().length > 0)
-        })));
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
+            name: p.name,
+            placeId: p.placeId,
+            hasPlaceId: Boolean(p.placeId && typeof p.placeId === 'string' && p.placeId.trim().length > 0)
+          })));
+        }
         
         setPlaces(fetchedPlaces);
       } catch (error) {
