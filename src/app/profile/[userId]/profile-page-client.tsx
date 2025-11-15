@@ -47,6 +47,10 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
+function hasValidPlaceId(placeId: string | null): boolean {
+  return Boolean(placeId && typeof placeId === 'string' && placeId.trim().length > 0);
+}
+
 interface ProfilePageClientProps {
   userId: string;
   currentUserId: string;
@@ -90,7 +94,7 @@ export default function ProfilePageClient({
           console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
             name: p.name,
             placeId: p.placeId,
-            hasPlaceId: Boolean(p.placeId && typeof p.placeId === 'string' && p.placeId.trim().length > 0)
+            hasPlaceId: hasValidPlaceId(p.placeId)
           })));
         }
         
@@ -189,12 +193,7 @@ export default function ProfilePageClient({
             </Card>
           ) : (
             places.map((place) => {
-              // More robust check for placeId
-              const hasPlaceId = Boolean(
-                place.placeId && 
-                typeof place.placeId === 'string' && 
-                place.placeId.trim().length > 0
-              );
+              const hasPlaceId = hasValidPlaceId(place.placeId);
 
               const cardContent = (
                 <Card
