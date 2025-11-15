@@ -50,6 +50,29 @@ export default function Map({ placeId = undefined }: MapProps) {
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPlaceSaved, setIsPlaceSaved] = useState(false);
+  const [isCheckingSaved, setIsCheckingSaved] = useState(false);
+
+  const checkIfPlaceIsSaved = async (placeIdToCheck: string) => {
+    setIsCheckingSaved(true);
+    try {
+      const session = await authClient.getSession();
+      if (!session?.data?.user) {
+        setIsCheckingSaved(false);
+        return;
+      }
+
+      const response = await fetch(`/api/places/check?placeId=${encodeURIComponent(placeIdToCheck)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setIsPlaceSaved(data.isSaved);
+      }
+    } catch (error) {
+      console.error("Error checking if place is saved:", error);
+    } finally {
+      setIsCheckingSaved(false);
+    }
+  };
 
   const loadPlaceById = (placeId: string, map: google.maps.Map) => {
     if (!window.google?.maps?.places) return;
@@ -84,20 +107,32 @@ export default function Map({ placeId = undefined }: MapProps) {
             title: place.name,
           });
 
-          setSelectedPlace({
+          const loadedPlace: SelectedPlace = {
             name: place.name || "",
             formattedAddress: place.formatted_address || "",
             latitude: place.geometry.location.lat(),
             longitude: place.geometry.location.lng(),
             placeId: place.place_id,
-          });
+          };
 
+          setSelectedPlace(loadedPlace);
+
+          if (place.place_id) {
+            checkIfPlaceIsSaved(place.place_id);
+          }
         }
       }
     );
   };
 
   useEffect(() => {
+    setIsPlaceSaved(false);
+    setSelectedPlace(null);
+
+    if (placeId) {
+      checkIfPlaceIsSaved(placeId);
+    }
+
     const initMap = () => {
       if (!mapRef.current || !window.google?.maps) return;
 
@@ -172,11 +207,16 @@ export default function Map({ placeId = undefined }: MapProps) {
 
       if (!response.ok) {
         const error = await response.json();
+        if (response.status === 409) {
+          setIsPlaceSaved(true);
+          toast.info("Place is already saved");
+          return;
+        }
         throw new Error(error.error || "Failed to save place");
       }
 
       toast.success("Place saved successfully!");
-      setSelectedPlace(null);
+      setIsPlaceSaved(true);
     } catch (error) {
       console.error("Error saving place:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save place");
@@ -199,10 +239,14 @@ export default function Map({ placeId = undefined }: MapProps) {
           </p>
           <button
             onClick={handleAddPlace}
-            disabled={isSaving}
-            className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium rounded-md transition-colors"
+            disabled={isSaving || isPlaceSaved || isCheckingSaved}
+            className={`w-full px-4 py-2 font-medium rounded-md transition-colors ${
+              isPlaceSaved
+                ? "bg-green-600 hover:bg-green-700 text-white cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white"
+            }`}
           >
-            {isSaving ? "Saving..." : "Add Place"}
+            {isSaving ? "Saving..." : isCheckingSaved ? "Checking..." : isPlaceSaved ? "Saved" : "Add Place"}
           </button>
         </div>
       )}

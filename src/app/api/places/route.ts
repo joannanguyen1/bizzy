@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { savedPlace } from "@/schema/places-schema";
 import { randomUUID } from "crypto";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(req: Request) {
   if (!process.env.GOOGLE_MAPS_API_KEY) {
@@ -57,6 +58,26 @@ export async function POST(req: NextRequest) {
         { error: "Missing required fields: name, formattedAddress, latitude, longitude" },
         { status: 400 }
       );
+    }
+
+    if (placeId) {
+      const existingPlace = await db
+        .select()
+        .from(savedPlace)
+        .where(
+          and(
+            eq(savedPlace.userId, session.user.id),
+            eq(savedPlace.placeId, placeId)
+          )
+        )
+        .limit(1);
+
+      if (existingPlace.length > 0) {
+        return NextResponse.json(
+          { error: "Place is already saved", place: existingPlace[0] },
+          { status: 409 }
+        );
+      }
     }
 
     const newPlace = await db.insert(savedPlace).values({
