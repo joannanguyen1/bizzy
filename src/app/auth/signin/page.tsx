@@ -86,6 +86,7 @@ const SignInPage = () => {
             name="email"
             type="email"
             register={register}
+            placeholder="janedoe@gmail.com"
             errors={errors}
           />
           <FormInput
@@ -93,6 +94,7 @@ const SignInPage = () => {
             name="password"
             type="password"
             register={register}
+            placeholder="••••••••"
             errors={errors}
           />
 
