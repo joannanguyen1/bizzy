@@ -110,6 +110,7 @@ const RegisterPage = () => {
             name="name"
             type="text"
             register={register}
+            placeholder="Jane Doe"
             errors={errors}
           />
           <FormInput
@@ -117,6 +118,7 @@ const RegisterPage = () => {
             name="email"
             type="email"
             register={register}
+            placeholder="janedoe@gmail.com"
             errors={errors}
           />
           <FormInput
@@ -124,6 +126,7 @@ const RegisterPage = () => {
             name="password"
             type="password"
             register={register}
+            placeholder="••••••••"
             errors={errors}
           />
 
