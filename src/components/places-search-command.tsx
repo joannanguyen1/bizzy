@@ -15,16 +15,21 @@ import {
 
 type PlaceSuggestion = google.maps.places.AutocompleteSuggestion
 
-interface ExtendedPlacePrediction extends google.maps.places.PlacePrediction {
+type ExtendedPlacePrediction = google.maps.places.PlacePrediction & {
   structuredFormat?: {
     mainText?: {
-      text: string;
-    };
+      text: string
+    }
     secondaryText?: {
-      text: string;
-    };
-  };
+      text: string
+    }
+  }
 }
+
+type UserLocation = {
+  lat: number
+  lng: number
+} | null
 
 export default function PlacesSearchCommand() {
   const router = useRouter()
@@ -33,6 +38,10 @@ export default function PlacesSearchCommand() {
   const [places, setPlaces] = React.useState<PlaceSuggestion[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+
+  const [userLocation, setUserLocation] = React.useState<UserLocation>(null)
+  const [isRequestingLocation, setIsRequestingLocation] = React.useState(false)
+  const locationRequestedRef = React.useRef(false)
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -51,7 +60,39 @@ export default function PlacesSearchCommand() {
       clearTimeout(timeoutRef.current)
     }
 
-    if (!searchQuery.trim()) {
+    const trimmed = searchQuery.trim()
+
+    if (
+      trimmed &&
+      !locationRequestedRef.current &&
+      !userLocation &&
+      typeof navigator !== "undefined" &&
+      "geolocation" in navigator
+    ) {
+      locationRequestedRef.current = true
+      setIsRequestingLocation(true)
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setUserLocation({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          })
+          setIsRequestingLocation(false)
+        },
+        (err) => {
+          console.info("Geolocation error in search:", err.message)
+          setIsRequestingLocation(false)
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000,
+        }
+      )
+    }
+
+    if (!trimmed) {
       setPlaces([])
       setIsLoading(false)
       return
@@ -67,8 +108,8 @@ export default function PlacesSearchCommand() {
       }
 
       try {
-        const { suggestions } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: searchQuery,
+        const requestOptions: any = {
+          input: trimmed,
           locationRestriction: {
             south: 39.86,
             west: -75.30,
@@ -76,30 +117,49 @@ export default function PlacesSearchCommand() {
             east: -74.95,
           },
           region: "us",
-        })
+        }
+
+        if (userLocation) {
+          requestOptions.origin = new google.maps.LatLng(
+            userLocation.lat,
+            userLocation.lng
+          )
+        }
+
+        const { suggestions } =
+          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(
+            requestOptions
+          )
 
         setIsLoading(false)
-        const validSuggestions = suggestions?.filter(s => s.placePrediction) || []
+        const validSuggestions = suggestions?.filter((s) => s.placePrediction) || []
         setPlaces(validSuggestions)
       } catch (error) {
         console.error("Error fetching place suggestions:", error)
         setIsLoading(false)
         setPlaces([])
       }
-    }, 500);
+    }, 500)
 
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [searchQuery]);
+  }, [searchQuery, userLocation])
 
   const handleSelectPlace = (placeId: string) => {
     router.push(`/map/places/${encodeURIComponent(placeId)}`)
     setOpen(false)
     setSearchQuery("")
   }
+
+  const formatMiles = (meters?: number | null) => {
+    if (meters == null) return ""; 
+    const miles = meters * 0.000621371;
+    if (miles < 0.1) return "<0.1 mi";
+    return `${miles.toFixed(1)} mi`;
+  };
 
   return (
     <>
@@ -118,7 +178,9 @@ export default function PlacesSearchCommand() {
             size={16}
             aria-hidden="true"
           />
-          <span className="font-normal text-muted-foreground/70">Search places...</span>
+        <span className="font-normal text-muted-foreground/70">
+          Search places...
+        </span>
         </span>
         <kbd className="ms-12 -me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
           ⌘K
@@ -132,13 +194,20 @@ export default function PlacesSearchCommand() {
         />
         <CommandList>
           <CommandEmpty>
-            {isLoading ? "Searching..." : "No places found."}
+            {isLoading
+              ? "Searching..."
+              : isRequestingLocation
+              ? "Requesting your location..."
+              : "No places found."}
           </CommandEmpty>
           {places.length > 0 && (
             <CommandGroup heading="Places">
               {places.map((suggestion) => {
-                const prediction = suggestion.placePrediction as ExtendedPlacePrediction | null
+                const prediction =
+                  suggestion.placePrediction as ExtendedPlacePrediction | null
                 if (!prediction?.placeId) return null
+
+                const distanceLabel = formatMiles(prediction.distanceMeters)
 
                 return (
                   <CommandItem
@@ -150,17 +219,29 @@ export default function PlacesSearchCommand() {
                         setSearchQuery(prediction.text?.text || "")
                       }
                     }}
-                    className="cursor-pointer"
+                    className="cursor-pointer flex items-center justify-between"
                   >
-                    <MapPinIcon className="mr-2 h-4 w-4" />
-                    <div className="flex flex-col">
-                      <span>{prediction.structuredFormat?.mainText?.text || prediction.text?.text || ""}</span>
-                      {prediction.structuredFormat?.secondaryText?.text && (
-                        <span className="text-xs text-muted-foreground">
-                          {prediction.structuredFormat.secondaryText.text}
+                    <div className="flex items-start">
+                      <MapPinIcon className="mr-2 mt-[2px] h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span>
+                          {prediction.structuredFormat?.mainText?.text ||
+                            prediction.text?.text ||
+                            ""}
                         </span>
-                      )}
+                        {prediction.structuredFormat?.secondaryText?.text && (
+                          <span className="text-xs text-muted-foreground">
+                            {prediction.structuredFormat.secondaryText.text}
+                          </span>
+                        )}
+                      </div>
                     </div>
+
+                    {distanceLabel && (
+                      <span className="ml-4 text-xs text-muted-foreground whitespace-nowrap">
+                        {distanceLabel} away
+                      </span>
+                    )}
                   </CommandItem>
                 )
               })}
