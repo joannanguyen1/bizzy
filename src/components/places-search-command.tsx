@@ -31,6 +31,18 @@ type UserLocation = {
   lng: number
 } | null
 
+interface AutocompleteSuggestionRequest {
+  input: string;
+  region?: string;
+  locationRestriction?: {
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  };
+  origin?: google.maps.LatLng | google.maps.LatLngLiteral;
+}
+
 export default function PlacesSearchCommand() {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
@@ -86,7 +98,7 @@ export default function PlacesSearchCommand() {
         },
         {
           enableHighAccuracy: true,
-          maximumAge: 0,
+          maximumAge: 6000,
           timeout: 10000,
         }
       )
@@ -108,23 +120,23 @@ export default function PlacesSearchCommand() {
       }
 
       try {
-        const requestOptions: any = {
+        const baseOptions: AutocompleteSuggestionRequest = {
           input: trimmed,
+          region: "us",
           locationRestriction: {
             south: 39.86,
-            west: -75.30,
+            west: -75.3,
             north: 40.14,
             east: -74.95,
           },
-          region: "us",
         }
 
-        if (userLocation) {
-          requestOptions.origin = new google.maps.LatLng(
-            userLocation.lat,
-            userLocation.lng
-          )
-        }
+        const requestOptions: AutocompleteSuggestionRequest = userLocation
+          ? {
+              ...baseOptions,
+              origin: new google.maps.LatLng(userLocation.lat, userLocation.lng),
+            }
+          : baseOptions
 
         const { suggestions } =
           await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(
@@ -155,11 +167,11 @@ export default function PlacesSearchCommand() {
   }
 
   const formatMiles = (meters?: number | null) => {
-    if (meters == null) return ""; 
-    const miles = meters * 0.000621371;
-    if (miles < 0.1) return "<0.1 mi";
-    return `${miles.toFixed(1)} mi`;
-  };
+    if (meters == null) return ""
+    const miles = meters * 0.000621371
+    if (miles < 0.1) return "<0.1 mi"
+    return `${miles.toFixed(1)} mi`
+  }
 
   return (
     <>
@@ -178,9 +190,9 @@ export default function PlacesSearchCommand() {
             size={16}
             aria-hidden="true"
           />
-        <span className="font-normal text-muted-foreground/70">
-          Search places...
-        </span>
+          <span className="font-normal text-muted-foreground/70">
+            Search places...
+          </span>
         </span>
         <kbd className="ms-12 -me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
           ⌘K
@@ -252,4 +264,3 @@ export default function PlacesSearchCommand() {
     </>
   )
 }
-

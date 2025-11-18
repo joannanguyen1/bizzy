@@ -138,22 +138,32 @@ export default function Map({ placeId = undefined }: MapProps) {
       checkIfPlaceIsSaved(placeId);
     }
 
-    const initMap = () => {
-      if (!mapRef.current || !window.google?.maps) return;
+  const initMap = () => {
+    if (!mapRef.current || !window.google?.maps) return;
 
-      const maps = window.google.maps;
-      const phillyCenter: google.maps.LatLngLiteral = {
-        lat: 39.9526,
-        lng: -75.1652,
-      };
+    const maps = window.google.maps;
 
-      const map = new maps.Map(mapRef.current, {
-        center: phillyCenter,
-        zoom: 12,
-        mapTypeControl: false,
-      });
+    const phillyCenter: google.maps.LatLngLiteral = {
+      lat: 39.9526,
+      lng: -75.1652,
+    };
 
-      mapInstanceRef.current = map;
+    const phillyBounds = new maps.LatLngBounds(
+      { lat: 39.86, lng: -75.30 }, // SW corner
+      { lat: 40.14, lng: -74.95 }  // NE corner
+    );
+
+    const map = new maps.Map(mapRef.current, {
+      center: phillyCenter,
+      zoom: 12,
+      mapTypeControl: false,
+      restriction: {
+        latLngBounds: phillyBounds,
+        strictBounds: true, 
+      },
+    });
+
+    mapInstanceRef.current = map;
 
       const centerOnUserLocation = () => {
         if (hasRequestedUserLocationRef.current) return;
