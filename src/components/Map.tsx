@@ -47,11 +47,13 @@ interface MapProps {
 export default function Map({ placeId = undefined }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
+  const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPlaceSaved, setIsPlaceSaved] = useState(false);
   const [isCheckingSaved, setIsCheckingSaved] = useState(false);
+  const locationAttemptedRef = useRef(false);
 
   const checkIfPlaceIsSaved = async (placeIdToCheck: string) => {
     setIsCheckingSaved(true);
@@ -74,11 +76,61 @@ export default function Map({ placeId = undefined }: MapProps) {
     }
   };
 
+  const getCurrentLocation = (map: google.maps.Map) => {
+    if (!navigator.geolocation || locationAttemptedRef.current) return;
+
+    locationAttemptedRef.current = true;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const userLocation = { lat: latitude, lng: longitude };
+
+        // Make sure map is fully initialized before using it
+        if (map && window.google?.maps) {
+          // Center map on user location with closer zoom
+          map.setCenter(userLocation);
+          map.setZoom(16);
+
+          // Remove existing user marker
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setMap(null);
+          }
+
+          // Add user location marker with custom blue dot
+          userMarkerRef.current = new window.google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: "Your Location",
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+            },
+          });
+
+          toast.success("Location found!");
+        }
+      },
+      (error) => {
+        // Silently handle location errors - no popup
+        console.log("Location access denied or unavailable");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
+  };
+
   const loadPlaceById = (placeId: string, map: google.maps.Map) => {
     if (!window.google?.maps?.places) return;
 
     const maps = window.google.maps;
-    // PlacesService is not fully typed in @types/google.maps, so we use a type assertion
     const placesNamespace = maps.places as unknown as PlacesNamespace;
     const PlacesServiceConstructor = placesNamespace.PlacesService;
     if (!PlacesServiceConstructor) return;
@@ -128,6 +180,7 @@ export default function Map({ placeId = undefined }: MapProps) {
   useEffect(() => {
     setIsPlaceSaved(false);
     setSelectedPlace(null);
+    locationAttemptedRef.current = false; // Reset location attempt for new placeId
 
     if (placeId) {
       checkIfPlaceIsSaved(placeId);
@@ -155,9 +208,15 @@ export default function Map({ placeId = undefined }: MapProps) {
 
       mapInstanceRef.current = map;
 
-      if (placeId) {
-        loadPlaceById(placeId, map);
-      }
+      // Wait for map to be fully loaded before attempting location or place loading
+      maps.event.addListenerOnce(map, 'tilesloaded', () => {
+        if (placeId) {
+          loadPlaceById(placeId, map);
+        } else {
+          // Only get current location if no specific place is being shown
+          getCurrentLocation(map);
+        }
+      });
     };
 
     let checkGoogle: NodeJS.Timeout | null = null;
