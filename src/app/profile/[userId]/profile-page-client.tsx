@@ -103,7 +103,6 @@ export default function ProfilePageClient({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch profile data
         const profileResponse = await fetch(`/api/profile/${userId}`);
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch profile");
@@ -111,7 +110,6 @@ export default function ProfilePageClient({
         const profile = await profileResponse.json();
         setProfileData(profile);
 
-        // Fetch user's places
         const placesResponse = await fetch(`/api/profile/${userId}/places`);
         if (!placesResponse.ok) {
           throw new Error("Failed to fetch places");
@@ -119,7 +117,6 @@ export default function ProfilePageClient({
         const placesData = await placesResponse.json();
         const fetchedPlaces = placesData.places || [];
 
-        // Debug: Log places to check placeId values
         if (process.env.NODE_ENV === 'development') {
           console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
             name: p.name,
