@@ -11,7 +11,6 @@ export async function GET(
   try {
     const { userId } = await params;
 
-    // Get user's saved places, ordered by most recent first
     const places = await db
       .select()
       .from(savedPlace)

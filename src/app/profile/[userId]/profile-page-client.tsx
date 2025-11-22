@@ -7,6 +7,7 @@ import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import BoringAvatar from "boring-avatars";
 import { Session, User } from "better-auth/types";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface ProfileData {
   };
   followersCount: number;
   followingCount: number;
+  isFollowing: boolean;
 }
 
 interface SavedPlace {
@@ -69,34 +71,26 @@ export default function ProfilePageClient({
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isUpdatingFollow, setIsUpdatingFollow] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch profile data
         const profileResponse = await fetch(`/api/profile/${userId}`);
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch profile");
         }
         const profile = await profileResponse.json();
         setProfileData(profile);
+        setIsFollowing(profile.isFollowing || false);
 
-        // Fetch user's places
         const placesResponse = await fetch(`/api/profile/${userId}/places`);
         if (!placesResponse.ok) {
           throw new Error("Failed to fetch places");
         }
         const placesData = await placesResponse.json();
         const fetchedPlaces = placesData.places || [];
-        
-        // Debug: Log places to check placeId values
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
-            name: p.name,
-            placeId: p.placeId,
-            hasPlaceId: hasValidPlaceId(p.placeId)
-          })));
-        }
         
         setPlaces(fetchedPlaces);
       } catch (error) {
@@ -122,12 +116,43 @@ export default function ProfilePageClient({
   const isOwnProfile = userId === currentUserId;
   const user = profileData.user;
 
+  const handleFollowToggle = async () => {
+    if (isUpdatingFollow || isOwnProfile) return;
+
+    setIsUpdatingFollow(true);
+    try {
+      const method = isFollowing ? "DELETE" : "POST";
+      const response = await fetch(`/api/profile/${userId}/follow`, {
+        method,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update follow status");
+      }
+
+      setIsFollowing(!isFollowing);
+      
+      setProfileData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          followersCount: isFollowing
+            ? prev.followersCount - 1
+            : prev.followersCount + 1,
+        };
+      });
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+    } finally {
+      setIsUpdatingFollow(false);
+    }
+  };
+
   return (
     <LoggedInLayout session={session}>
       <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-col flex-1 w-full h-full overflow-y-auto">
           <div className="container mx-auto px-4 py-8 max-w-4xl">
-            {/* Profile Header */}
             <Card className="mb-6">
               <CardHeader>
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -150,8 +175,26 @@ export default function ProfilePageClient({
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-2xl mb-2">{user.name}</CardTitle>
-                    <CardDescription className="mb-4">{user.email}</CardDescription>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <CardTitle className="text-2xl mb-2">{user.name}</CardTitle>
+                        <CardDescription className="mb-4">{user.email}</CardDescription>
+                      </div>
+                      {!isOwnProfile && (
+                        <Button
+                          onClick={handleFollowToggle}
+                          disabled={isUpdatingFollow}
+                          variant={isFollowing ? "outline" : "default"}
+                          className="ml-4"
+                        >
+                          {isUpdatingFollow
+                            ? "..."
+                            : isFollowing
+                            ? "Following"
+                            : "Follow"}
+                        </Button>
+                      )}
+                    </div>
                     <div className="flex gap-6 text-sm">
                       <div className="flex flex-col">
                         <span className="font-semibold text-foreground">
@@ -177,7 +220,6 @@ export default function ProfilePageClient({
               </CardHeader>
             </Card>
 
-            {/* Places Feed */}
             <div className="space-y-4 pb-8">
               <h2 className="text-xl font-semibold mb-4">
                 {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
