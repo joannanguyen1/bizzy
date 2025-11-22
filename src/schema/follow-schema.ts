@@ -14,6 +14,8 @@ export const follow = pgTable(
   },
   (table) => ({
     pk: primaryKey({ columns: [table.followerId, table.followingId] }),
+    followerIdx: index("follower_idx").on(table.followerId),
+    followingIdx: index("following_idx").on(table.followingId),
   })
 );
 
