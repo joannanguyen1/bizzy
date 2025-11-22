@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Toaster } from "sonner";
 import { QueryProvider } from "@/lib/query-client";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 const sfPro = localFont({
   src: [
@@ -49,6 +50,7 @@ export default function RootLayout({
     <html lang="en" className={sfPro.variable}>
       <body className="antialiased">
         <QueryProvider>
+          <NextTopLoader color="#F59E0B" height={2} showSpinner={false} />
           {children}
           <Toaster />
         </QueryProvider>
