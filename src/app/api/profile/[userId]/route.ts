@@ -3,16 +3,17 @@ import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user } from "@/schema/auth-schema";
-import { eq } from "drizzle-orm";
+import { follow } from "@/schema/follow-schema";
+import { eq, and, count } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const session = await auth.api.getSession({ headers: req.headers });
     const { userId } = await params;
     
-    // Get the user
     const userData = await db
       .select()
       .from(user)
@@ -25,10 +26,35 @@ export async function GET(
 
     const userRecord = userData[0];
 
-    // TODO: Implement followers/following when schema is added
-    // For now, return 0
-    const followersCount = 0;
-    const followingCount = 0;
+    const followersResult = await db
+      .select({ count: count() })
+      .from(follow)
+      .where(eq(follow.followingId, userId));
+
+    const followersCount = followersResult[0]?.count || 0;
+
+    const followingResult = await db
+      .select({ count: count() })
+      .from(follow)
+      .where(eq(follow.followerId, userId));
+
+    const followingCount = followingResult[0]?.count || 0;
+
+    let isFollowing = false;
+    if (session?.user?.id) {
+      const followCheck = await db
+        .select()
+        .from(follow)
+        .where(
+          and(
+            eq(follow.followerId, session.user.id),
+            eq(follow.followingId, userId)
+          )
+        )
+        .limit(1);
+      
+      isFollowing = followCheck.length > 0;
+    }
 
     return NextResponse.json({
       user: {
@@ -40,6 +66,7 @@ export async function GET(
       },
       followersCount,
       followingCount,
+      isFollowing,
     });
   } catch (err) {
     console.error("Error fetching profile:", err);
