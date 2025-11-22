@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { user } from "@/schema/auth-schema";
-import { eq } from "drizzle-orm";
+import { user, follows } from "@/schema/auth-schema";
+import { eq, sql } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -24,10 +23,19 @@ export async function GET(
 
     const userRecord = userData[0];
 
-    // TODO: Implement followers/following when schema is added
-    // For now, return 0
-    const followersCount = 0;
-    const followingCount = 0;
+    const [followersResult, followingResult] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(follows)
+        .where(eq(follows.followingId, userId)),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(follows)
+        .where(eq(follows.followerId, userId)),
+    ]);
+
+    const followersCount = followersResult[0]?.count || 0;
+    const followingCount = followingResult[0]?.count || 0;
 
     return NextResponse.json({
       user: {

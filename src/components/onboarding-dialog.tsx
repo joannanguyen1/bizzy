@@ -134,6 +134,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set())
 
   const [
     { files, isDragging },
@@ -278,6 +279,30 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     } else if (step === 2) {
       fetchSuggestedUsers()
       setStep(3)
+    }
+  }
+
+  const handleFollowUser = async (targetUserId: string) => {
+    try {
+      const isFollowing = followingUsers.has(targetUserId)
+
+      const response = await fetch(`/api/users/${targetUserId}/follow`, {
+        method: isFollowing ? "DELETE" : "POST",
+      })
+
+      if (response.ok) {
+        setFollowingUsers((prev) => {
+          const updated = new Set(prev)
+          if (isFollowing) {
+            updated.delete(targetUserId)
+          } else {
+            updated.add(targetUserId)
+          }
+          return updated
+        })
+      }
+    } catch (error) {
+      console.error("Error following user:", error)
     }
   }
 
@@ -467,8 +492,12 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                                 )}
                               </div>
                             </div>
-                            <Button variant="outline" size="sm" disabled>
-                              Follow
+                            <Button
+                              variant={followingUsers.has(user.id) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => handleFollowUser(user.id)}
+                            >
+                              {followingUsers.has(user.id) ? "Following" : "Follow"}
                             </Button>
                           </div>
                         </Card>
