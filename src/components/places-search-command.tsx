@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { SearchIcon, MapPinIcon } from "lucide-react"
+import { SearchIcon, MapPinIcon, UserIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Script from "next/script"
+import { cn } from "@/lib/utils"
 import {
   CommandDialog,
   CommandEmpty,
@@ -43,13 +44,26 @@ interface AutocompleteSuggestionRequest {
   origin?: google.maps.LatLng | google.maps.LatLngLiteral;
 }
 
+type SearchTab = "places" | "members"
+
+interface Member {
+  id: string
+  name: string
+  email: string
+  image: string | null
+  createdAt: string
+}
+
 export default function PlacesSearchCommand() {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
+  const [activeTab, setActiveTab] = React.useState<SearchTab>("places")
   const [searchQuery, setSearchQuery] = React.useState("")
   const [places, setPlaces] = React.useState<PlaceSuggestion[]>([])
+  const [members, setMembers] = React.useState<Member[]>([])
   const [isLoading, setIsLoading] = React.useState(false)
   const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const memberTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const [userLocation, setUserLocation] = React.useState<UserLocation>(null)
   const [isRequestingLocation, setIsRequestingLocation] = React.useState(false)
@@ -67,7 +81,13 @@ export default function PlacesSearchCommand() {
     return () => document.removeEventListener("keydown", down)
   }, [])
 
+  // Search places effect
   React.useEffect(() => {
+    if (activeTab !== "places") {
+      setPlaces([])
+      return
+    }
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
@@ -158,10 +178,60 @@ export default function PlacesSearchCommand() {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [searchQuery, userLocation])
+  }, [searchQuery, userLocation, activeTab])
+
+  // Search members effect
+  React.useEffect(() => {
+    if (activeTab !== "members") {
+      setMembers([])
+      return
+    }
+
+    if (memberTimeoutRef.current) {
+      clearTimeout(memberTimeoutRef.current)
+    }
+
+    const trimmed = searchQuery.trim()
+
+    if (!trimmed) {
+      setMembers([])
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
+
+    memberTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(trimmed)}`)
+        if (!response.ok) {
+          throw new Error("Failed to search users")
+        }
+        const data = await response.json()
+        setIsLoading(false)
+        setMembers(data.users || [])
+      } catch (error) {
+        console.error("Error searching members:", error)
+        setIsLoading(false)
+        setMembers([])
+      }
+    }, 500)
+
+    return () => {
+      if (memberTimeoutRef.current) {
+        clearTimeout(memberTimeoutRef.current)
+      }
+    }
+  }, [searchQuery, activeTab])
 
   const handleSelectPlace = (placeId: string) => {
     router.push(`/map/places/${encodeURIComponent(placeId)}`)
+    setOpen(false)
+    setSearchQuery("")
+  }
+
+  const handleSelectMember = (userId: string) => {
+    router.push(`/profile/${userId}`)
     setOpen(false)
     setSearchQuery("")
   }
@@ -191,16 +261,51 @@ export default function PlacesSearchCommand() {
             aria-hidden="true"
           />
           <span className="font-normal text-muted-foreground/70">
-            Search places...
+            Search...
           </span>
         </span>
         <kbd className="ms-12 -me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
           ⌘K
         </kbd>
       </button>
-      <CommandDialog open={open} onOpenChange={setOpen} title="Search places">
+      <CommandDialog open={open} onOpenChange={setOpen} title="Search">
+        {/* Tabs */}
+        <div className="flex border-b">
+          <button
+            onClick={() => {
+              setActiveTab("places")
+              setSearchQuery("")
+            }}
+            className={cn(
+              "flex-1 px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "places"
+                ? "border-b-2 border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Places
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("members")
+              setSearchQuery("")
+            }}
+            className={cn(
+              "flex-1 px-4 py-2 text-sm font-medium transition-colors",
+              activeTab === "members"
+                ? "border-b-2 border-primary text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Members
+          </button>
+        </div>
         <CommandInput
-          placeholder="Search places in Philadelphia..."
+          placeholder={
+            activeTab === "places"
+              ? "Search places in Philadelphia..."
+              : "Search members..."
+          }
           value={searchQuery}
           onValueChange={setSearchQuery}
         />
@@ -208,11 +313,13 @@ export default function PlacesSearchCommand() {
           <CommandEmpty>
             {isLoading
               ? "Searching..."
-              : isRequestingLocation
+              : activeTab === "places" && isRequestingLocation
               ? "Requesting your location..."
-              : "No places found."}
+              : activeTab === "places"
+              ? "No places found."
+              : "No members found."}
           </CommandEmpty>
-          {places.length > 0 && (
+          {activeTab === "places" && places.length > 0 && (
             <CommandGroup heading="Places">
               {places.map((suggestion) => {
                 const prediction =
@@ -257,6 +364,25 @@ export default function PlacesSearchCommand() {
                   </CommandItem>
                 )
               })}
+            </CommandGroup>
+          )}
+          {activeTab === "members" && members.length > 0 && (
+            <CommandGroup heading="Members">
+              {members.map((member) => (
+                <CommandItem
+                  key={member.id}
+                  onSelect={() => handleSelectMember(member.id)}
+                  className="cursor-pointer flex items-center gap-3"
+                >
+                  <UserIcon className="h-4 w-4 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate">{member.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {member.email}
+                    </span>
+                  </div>
+                </CommandItem>
+              ))}
             </CommandGroup>
           )}
         </CommandList>
