@@ -14,6 +14,7 @@ import BizzyLogo from "@/components/logo";
 import { authClient } from "@/lib/auth-client";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import GoogleIcon from "@/components/GoogleIcon";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 const RegisterSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -25,6 +26,8 @@ type RegisterForm = z.infer<typeof RegisterSchema>;
 
 const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
   const { isGoogleLoading, signUpWithGoogle } = useGoogleAuth();
 
   const {
@@ -53,8 +56,14 @@ const RegisterPage = () => {
           onError: (ctx) => {
             toast.error(ctx.error.message);
           },
-          onSuccess: async () => {
-            router.replace("/");
+          onSuccess: async (ctx) => {
+            const userId = ctx.data?.user?.id;
+            if (userId) {
+              setNewUserId(userId);
+              setShowOnboarding(true);
+            } else {
+              router.replace("/");
+            }
           },
         },
       });
@@ -65,12 +74,25 @@ const RegisterPage = () => {
     }
   };
 
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    router.replace("/");
+  };
+
   return (
-    <section className="flex min-h-screen items-center justify-center bg-white px-4">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="w-full max-w-md mx-auto p-8"
-      >
+    <>
+      {newUserId && (
+        <OnboardingDialog
+          open={showOnboarding}
+          userId={newUserId}
+          onComplete={handleOnboardingComplete}
+        />
+      )}
+      <section className="flex min-h-screen items-center justify-center bg-white px-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="w-full max-w-md mx-auto p-8"
+        >
         <div className="text-center">
           <Link href="/" aria-label="Go home" className="mx-auto block w-fit">
             <BizzyLogo width={54} height={54} />
@@ -149,6 +171,7 @@ const RegisterPage = () => {
         </div>
       </form>
     </section>
+    </>
   );
 };
 

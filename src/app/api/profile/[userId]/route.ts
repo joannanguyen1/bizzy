@@ -11,8 +11,7 @@ export async function GET(
 ) {
   try {
     const { userId } = await params;
-    
-    // Get the user
+
     const userData = await db
       .select()
       .from(user)
@@ -38,6 +37,8 @@ export async function GET(
         image: userRecord.image,
         createdAt: userRecord.createdAt,
       },
+      onboardingCompleted: userRecord.onboardingCompleted,
+      interests: userRecord.interests,
       followersCount,
       followingCount,
     });
