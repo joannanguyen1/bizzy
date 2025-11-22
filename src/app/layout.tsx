@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "sonner";
+import { QueryProvider } from "@/lib/query-client";
 import "./globals.css";
 
 const sfPro = localFont({
@@ -47,8 +48,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={sfPro.variable}>
       <body className="antialiased">
-        {children}
-        <Toaster />
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );

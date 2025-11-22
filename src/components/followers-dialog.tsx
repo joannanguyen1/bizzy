@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Dialog,
@@ -11,17 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/follow-button";
+import { useFollowers, useFollowing } from "@/hooks/use-followers";
 import BoringAvatar from "boring-avatars";
 import { CircleUserRoundIcon } from "lucide-react";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
-
-interface UserItem {
-  id: string;
-  name: string;
-  image: string | null;
-  createdAt: string;
-}
 
 interface FollowersDialogProps {
   open: boolean;
@@ -48,34 +41,12 @@ export function FollowersDialog({
   currentUserId,
   type,
 }: FollowersDialogProps) {
-  const [users, setUsers] = useState<UserItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const followersQuery = useFollowers(userId);
+  const followingQuery = useFollowing(userId);
 
-  useEffect(() => {
-    if (!open) return;
-
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const endpoint =
-          type === "followers"
-            ? `/api/users/${userId}/followers`
-            : `/api/users/${userId}/following`;
-
-        const response = await fetch(endpoint);
-        if (response.ok) {
-          const data = await response.json();
-          setUsers(data[type] || []);
-        }
-      } catch (error) {
-        console.error(`Error fetching ${type}:`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [open, userId, type]);
+  const query = type === "followers" ? followersQuery : followingQuery;
+  const users = query.data || [];
+  const isLoading = query.isLoading && !query.data;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

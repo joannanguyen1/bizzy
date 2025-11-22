@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,11 +69,36 @@ export default function ProfilePageClient({
   session,
 }: ProfilePageClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+
+  const prefetchFollowers = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["followers", userId],
+      queryFn: async () => {
+        const response = await fetch(`/api/users/${userId}/followers`);
+        if (!response.ok) throw new Error("Failed to fetch followers");
+        const data = await response.json();
+        return data.followers || [];
+      },
+    });
+  };
+
+  const prefetchFollowing = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["following", userId],
+      queryFn: async () => {
+        const response = await fetch(`/api/users/${userId}/following`);
+        if (!response.ok) throw new Error("Failed to fetch following");
+        const data = await response.json();
+        return data.following || [];
+      },
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,7 +174,7 @@ export default function ProfilePageClient({
         <Card className="mb-6">
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 {user.image ? (
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={user.image} alt={user.name} />
@@ -180,6 +206,7 @@ export default function ProfilePageClient({
                 <div className="flex gap-6 text-sm">
                   <button
                     onClick={() => setFollowersDialogOpen(true)}
+                    onMouseEnter={prefetchFollowers}
                     className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
                   >
                     <span className="font-semibold text-foreground">
@@ -189,6 +216,7 @@ export default function ProfilePageClient({
                   </button>
                   <button
                     onClick={() => setFollowingDialogOpen(true)}
+                    onMouseEnter={prefetchFollowing}
                     className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
                   >
                     <span className="font-semibold text-foreground">
@@ -266,7 +294,7 @@ export default function ProfilePageClient({
                   <Link
                     key={place.id}
                     href={`/map/places/${encodeURIComponent(placeIdValue)}`}
-                    className="block w-full no-underline relative z-[1] pointer-events-auto"
+                    className="block w-full no-underline relative z-1 pointer-events-auto"
                   >
                     {cardContent}
                   </Link>
@@ -274,7 +302,7 @@ export default function ProfilePageClient({
               }
 
               return (
-                <div key={place.id} className="relative z-[1]">
+                <div key={place.id} className="relative z-1">
                   {cardContent}
                 </div>
               );
