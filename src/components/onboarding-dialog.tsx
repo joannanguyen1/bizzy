@@ -8,8 +8,9 @@ import {
   XIcon,
   ZoomInIcon,
   ZoomOutIcon,
-  Check,
+  CheckIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +30,7 @@ import {
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
+import { motion, AnimatePresence } from "framer-motion"
 
 type Area = { x: number; y: number; width: number; height: number }
 
@@ -44,13 +46,14 @@ const createImage = (url: string): Promise<HTMLImageElement> =>
 async function getCroppedImg(
   imageSrc: string,
   pixelCrop: Area,
+  mimeType: string = "image/jpeg",
   outputWidth: number = pixelCrop.width,
   outputHeight: number = pixelCrop.height
 ): Promise<Blob | null> {
   try {
     const image = await createImage(imageSrc)
     const canvas = document.createElement("canvas")
-    const ctx = canvas.getContext("2d")
+    const ctx = canvas.getContext("2d", { alpha: true })
 
     if (!ctx) {
       return null
@@ -58,6 +61,10 @@ async function getCroppedImg(
 
     canvas.width = outputWidth
     canvas.height = outputHeight
+
+    if (mimeType === "image/png") {
+      ctx.clearRect(0, 0, outputWidth, outputHeight)
+    }
 
     ctx.drawImage(
       image,
@@ -71,10 +78,12 @@ async function getCroppedImg(
       outputHeight
     )
 
+    const quality = mimeType === "image/jpeg" ? 0.95 : undefined
+
     return new Promise((resolve) => {
       canvas.toBlob((blob) => {
         resolve(blob)
-      }, "image/jpeg")
+      }, mimeType, quality)
     })
   } catch (error) {
     console.error("Error in getCroppedImg:", error)
@@ -138,7 +147,9 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       getInputProps,
     },
   ] = useFileUpload({
-    accept: "image/*",
+    accept: "image/png, image/jpeg, image/jpg",
+    maxSize: 5 * 1024 * 1024,
+    onError: (message) => toast.error(message),
   })
 
   const previewUrl = files[0]?.preview || null
@@ -167,7 +178,10 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     }
 
     try {
-      const croppedBlob = await getCroppedImg(previewUrl, croppedAreaPixels)
+      const originalFile = files[0]?.file
+      const mimeType = originalFile?.type || "image/jpeg"
+
+      const croppedBlob = await getCroppedImg(previewUrl, croppedAreaPixels, mimeType)
 
       if (!croppedBlob) {
         throw new Error("Failed to generate cropped image blob.")
@@ -181,6 +195,11 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
 
       setFinalImageUrl(newFinalUrl)
 
+      removeFile(fileId)
+      previousFileIdRef.current = null
+      setCroppedAreaPixels(null)
+      setZoom(1)
+
       setIsDialogOpen(false)
     } catch (error) {
       console.error("Error during apply:", error)
@@ -193,6 +212,19 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       URL.revokeObjectURL(finalImageUrl)
     }
     setFinalImageUrl(null)
+    previousFileIdRef.current = null
+    setCroppedAreaPixels(null)
+    setZoom(1)
+  }
+
+  const handleCancelCrop = () => {
+    if (fileId) {
+      removeFile(fileId)
+      setCroppedAreaPixels(null)
+      setZoom(1)
+      previousFileIdRef.current = null
+    }
+    setIsDialogOpen(false)
   }
 
   useEffect(() => {
@@ -294,7 +326,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
 
   return (
     <>
-      <Dialog open={open} onOpenChange={() => {}}>
+      <Dialog open={open} onOpenChange={() => { }}>
         <DialogContent
           className="gap-0 p-0 sm:max-w-2xl"
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -327,10 +359,22 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                     >
                       <div className="flex flex-col items-center gap-2 text-center">
                         <span className="text-3xl">{category.emoji}</span>
-                        <span className="text-sm font-medium">{category.label}</span>
-                        {selectedInterests.includes(category.id) && (
-                          <Check className="h-4 w-4 text-amber-600" />
-                        )}
+                        <span className="text-sm font-medium flex items-center gap-2">
+                          {category.label}
+                          <AnimatePresence mode="wait">
+                            {selectedInterests.includes(category.id) && (
+                              <motion.div
+                                key="check-icon"
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 10 }}
+                                transition={{ duration: 0.15, ease: "easeInOut" }}
+                              >
+                                <CheckIcon className="h-4 w-4 text-amber-600" />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                          </span>
                       </div>
                     </Card>
                   ))}
@@ -341,7 +385,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative inline-flex">
                     <button
-                      className="relative flex size-32 items-center justify-center overflow-hidden rounded-full border border-dashed border-input transition-colors outline-none hover:bg-accent/50 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none data-[dragging=true]:bg-accent/50"
+                      className="relative flex size-32 items-center justify-center overflow-hidden rounded-full border border-dashed border-input outline-none hover:bg-accent/50 hover:brightness-75 transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-disabled:pointer-events-none has-disabled:opacity-50 has-[img]:border-none data-[dragging=true]:bg-accent/50"
                       onClick={openFileDialog}
                       onDragEnter={handleDragEnter}
                       onDragLeave={handleDragLeave}
@@ -448,11 +492,21 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 ))}
               </div>
               <DialogFooter>
-                <Button type="button" variant="ghost" onClick={handleNextStep}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleNextStep}
+                  disabled={step === 1 && selectedInterests.length === 0}
+                >
                   Skip
                 </Button>
                 {step < totalSteps ? (
-                  <Button className="group" type="button" onClick={handleNextStep}>
+                  <Button
+                    className="group"
+                    type="button"
+                    onClick={handleNextStep}
+                    disabled={step === 1 && selectedInterests.length === 0}
+                  >
                     Next
                     <ArrowRight
                       className="-me-1 ms-2 opacity-60 transition-transform group-hover:translate-x-0.5"
@@ -476,7 +530,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCancelCrop()}>
         <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
           <DialogDescription className="sr-only">
             Crop image dialog
@@ -489,7 +543,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                   variant="ghost"
                   size="icon"
                   className="-my-1 opacity-60"
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={handleCancelCrop}
                   aria-label="Cancel"
                 >
                   <ArrowLeftIcon aria-hidden="true" />
@@ -508,15 +562,20 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
           </DialogHeader>
           {previewUrl && (
             <Cropper
-              className="h-96 sm:h-120"
+              className="h-96 sm:h-120 bg-black"
               image={previewUrl}
               zoom={zoom}
+              aspectRatio={1}
+              minZoom={1}
+              maxZoom={4}
               onCropChange={handleCropChange}
               onZoomChange={setZoom}
             >
-              <CropperDescription />
+              <CropperDescription>
+                Drag to reposition the image. Use the slider below to zoom in or out.
+              </CropperDescription>
               <CropperImage />
-              <CropperCropArea />
+              <CropperCropArea className="rounded-full" />
             </Cropper>
           )}
           <DialogFooter className="border-t px-4 py-6">
@@ -530,7 +589,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 defaultValue={[1]}
                 value={[zoom]}
                 min={1}
-                max={3}
+                max={4}
                 step={0.1}
                 onValueChange={(value) => setZoom(value[0])}
                 aria-label="Zoom slider"

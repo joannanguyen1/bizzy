@@ -13,14 +13,15 @@ interface UseFileUploadOptions {
   maxFiles?: number
   maxSize?: number
   onFilesChange?: (files: FileWithPreview[]) => void
+  onError?: (message: string) => void
 }
 
-interface UseFileUploadReturn {
-  0: {
+type UseFileUploadReturn = [
+  {
     files: FileWithPreview[]
     isDragging: boolean
-  }
-  1: {
+  },
+  {
     handleDragEnter: (e: React.DragEvent) => void
     handleDragLeave: (e: React.DragEvent) => void
     handleDragOver: (e: React.DragEvent) => void
@@ -35,6 +36,25 @@ interface UseFileUploadReturn {
       onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     }
   }
+]
+
+function validateFileType(file: File, acceptPattern: string): boolean {
+  if (acceptPattern === "*") return true
+
+  const acceptedTypes = acceptPattern.split(",").map(t => t.trim())
+  const fileType = file.type.toLowerCase()
+  const fileName = file.name.toLowerCase()
+
+  return acceptedTypes.some(type => {
+    if (type.startsWith(".")) {
+      return fileName.endsWith(type)
+    }
+    if (type.endsWith("/*")) {
+      const prefix = type.slice(0, -2)
+      return fileType.startsWith(prefix)
+    }
+    return fileType === type
+  })
 }
 
 export function useFileUpload(
@@ -45,6 +65,7 @@ export function useFileUpload(
     maxFiles = 1,
     maxSize = 5 * 1024 * 1024,
     onFilesChange,
+    onError,
   } = options
 
   const [files, setFiles] = useState<FileWithPreview[]>([])
@@ -54,13 +75,22 @@ export function useFileUpload(
 
   const addFiles = useCallback(
     (newFiles: File[]) => {
-      const validFiles = newFiles.filter((file) => {
-        if (maxSize && file.size > maxSize) {
-          console.warn(`File ${file.name} is too large`)
-          return false
+      const validFiles: File[] = []
+
+      for (const file of newFiles) {
+        if (!validateFileType(file, accept)) {
+          onError?.(`${file.name} is not a supported file type. Please upload a PNG, JPG, or JPEG image.`)
+          continue
         }
-        return true
-      })
+
+        if (maxSize && file.size > maxSize) {
+          const sizeMB = (maxSize / (1024 * 1024)).toFixed(1)
+          onError?.(`${file.name} is too large. Maximum file size is ${sizeMB}MB.`)
+          continue
+        }
+
+        validFiles.push(file)
+      }
 
       const filesToAdd = validFiles.slice(0, maxFiles - files.length)
 
@@ -76,7 +106,7 @@ export function useFileUpload(
         return updated
       })
     },
-    [files.length, maxFiles, maxSize, onFilesChange]
+    [files.length, maxFiles, maxSize, onFilesChange, onError, accept]
   )
 
   const removeFile = useCallback(
