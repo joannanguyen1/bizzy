@@ -186,9 +186,10 @@ export default function ProfilePageClient({
                           disabled={isUpdatingFollow}
                           variant={isFollowing ? "outline" : "default"}
                           className="ml-4"
+                          aria-label={isUpdatingFollow ? "Processing follow or unfollow action" : undefined}
                         >
                           {isUpdatingFollow
-                            ? "..."
+                            ? "Loading..."
                             : isFollowing
                             ? "Following"
                             : "Follow"}
