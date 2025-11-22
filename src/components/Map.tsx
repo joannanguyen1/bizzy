@@ -48,14 +48,13 @@ export default function Map({ placeId = undefined }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const clickMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
-
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPlaceSaved, setIsPlaceSaved] = useState(false);
   const [isCheckingSaved, setIsCheckingSaved] = useState(false);
-
-  const hasRequestedUserLocationRef = useRef(false);
+  const locationAttemptedRef = useRef(false);
 
   const checkIfPlaceIsSaved = async (placeIdToCheck: string) => {
     setIsCheckingSaved(true);
@@ -66,9 +65,7 @@ export default function Map({ placeId = undefined }: MapProps) {
         return;
       }
 
-      const response = await fetch(
-        `/api/places/check?placeId=${encodeURIComponent(placeIdToCheck)}`
-      );
+      const response = await fetch(`/api/places/check?placeId=${encodeURIComponent(placeIdToCheck)}`);
       if (response.ok) {
         const data = await response.json();
         setIsPlaceSaved(data.isSaved);
@@ -77,6 +74,143 @@ export default function Map({ placeId = undefined }: MapProps) {
       console.error("Error checking if place is saved:", error);
     } finally {
       setIsCheckingSaved(false);
+    }
+  };
+
+  const getCurrentLocation = (map: google.maps.Map) => {
+    if (!navigator.geolocation || locationAttemptedRef.current) return;
+
+    locationAttemptedRef.current = true;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const userLocation = { lat: latitude, lng: longitude };
+
+        if (map && window.google?.maps) {
+          map.setCenter(userLocation);
+          map.setZoom(16);
+
+          if (userMarkerRef.current) {
+            userMarkerRef.current.setMap(null);
+          }
+
+          userMarkerRef.current = new window.google.maps.Marker({
+            position: userLocation,
+            map: map,
+            title: "Your Location",
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+            },
+          });
+
+          toast.success("Location found!");
+        }
+      },
+      (error) => {
+        console.log("Location access denied or unavailable");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000,
+      }
+    );
+  };
+
+  // Handle map clicks to add pins
+  const handleMapClick = async (event: google.maps.MapMouseEvent) => {
+    if (!event.latLng || !mapInstanceRef.current || !window.google?.maps) return;
+
+    const maps = window.google.maps;
+    const clickedLocation = event.latLng;
+    
+    // Remove previous click marker
+    if (clickMarkerRef.current) {
+      clickMarkerRef.current.setMap(null);
+    }
+
+    // Add new marker at clicked location
+    clickMarkerRef.current = new maps.Marker({
+      position: clickedLocation,
+      map: mapInstanceRef.current,
+      title: "Selected Location",
+      icon: {
+        path: maps.SymbolPath.CIRCLE,
+        scale: 10,
+        fillColor: "#EA4335",
+        fillOpacity: 1,
+        strokeColor: "#ffffff",
+        strokeWeight: 2,
+      },
+    });
+
+    // Use Geocoding API to get address information
+    const geocoder = new maps.Geocoder();
+    
+    try {
+      const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
+        geocoder.geocode(
+          { location: clickedLocation },
+          (results: google.maps.GeocoderResult[] | null, status: google.maps.GeocoderStatus) => {
+            if (status === "OK" && results) {
+              resolve(results);
+            } else {
+              reject(new Error(`Geocoding failed: ${status}`));
+            }
+          }
+        );
+      });
+
+      if (results && results.length > 0) {
+        const result = results[0];
+        
+        // Create a place object from the clicked location
+        const clickedPlace: SelectedPlace = {
+          name: result.formatted_address?.split(',')[0] || "Selected Location",
+          formattedAddress: result.formatted_address || `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+          latitude: clickedLocation.lat(),
+          longitude: clickedLocation.lng(),
+          placeId: result.place_id, // This will be undefined for some locations, but that's OK
+        };
+
+        setSelectedPlace(clickedPlace);
+        setIsPlaceSaved(false); // Reset saved status for new location
+        
+        // If we have a place_id, check if it's already saved
+        if (result.place_id) {
+          checkIfPlaceIsSaved(result.place_id);
+        }
+      } else {
+        // Fallback if geocoding doesn't return results
+        const fallbackPlace: SelectedPlace = {
+          name: "Selected Location",
+          formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+          latitude: clickedLocation.lat(),
+          longitude: clickedLocation.lng(),
+        };
+        
+        setSelectedPlace(fallbackPlace);
+        setIsPlaceSaved(false);
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      
+      // Fallback place when geocoding fails
+      const fallbackPlace: SelectedPlace = {
+        name: "Selected Location",
+        formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+        latitude: clickedLocation.lat(),
+        longitude: clickedLocation.lng(),
+      };
+      
+      setSelectedPlace(fallbackPlace);
+      setIsPlaceSaved(false);
     }
   };
 
@@ -103,7 +237,7 @@ export default function Map({ placeId = undefined }: MapProps) {
             markerRef.current.setMap(null);
           }
 
-          map.setCenter(place.geometry.location);
+          map.panTo(place.geometry.location);
           map.setZoom(15);
 
           markerRef.current = new maps.Marker({
@@ -133,100 +267,44 @@ export default function Map({ placeId = undefined }: MapProps) {
   useEffect(() => {
     setIsPlaceSaved(false);
     setSelectedPlace(null);
+    locationAttemptedRef.current = false;
 
     if (placeId) {
       checkIfPlaceIsSaved(placeId);
     }
 
-  const initMap = () => {
-    if (!mapRef.current || !window.google?.maps) return;
+    const initMap = () => {
+      if (!mapRef.current || !window.google?.maps) return;
 
-    const maps = window.google.maps;
+      const maps = window.google.maps;
+      const phillyCenter: google.maps.LatLngLiteral = { lat: 39.9526, lng: -75.1652 };
+      const phillyBounds = new maps.LatLngBounds(
+        { lat: 39.86, lng: -75.30 },
+        { lat: 40.14, lng: -74.95 }
+      );
 
-    const phillyCenter: google.maps.LatLngLiteral = {
-      lat: 39.9526,
-      lng: -75.1652,
-    };
+      const map = new maps.Map(mapRef.current, {
+        center: phillyCenter,
+        zoom: 12,
+        mapTypeControl: false,
+        restriction: {
+          latLngBounds: phillyBounds,
+          strictBounds: true,
+        },
+      });
 
-    const phillyBounds = new maps.LatLngBounds(
-      { lat: 39.86, lng: -75.30 }, // SW corner
-      { lat: 40.14, lng: -74.95 }  // NE corner
-    );
+      mapInstanceRef.current = map;
 
-    const map = new maps.Map(mapRef.current, {
-      center: phillyCenter,
-      zoom: 12,
-      mapTypeControl: false,
-      restriction: {
-        latLngBounds: phillyBounds,
-        strictBounds: true, 
-      },
-    });
+      // Add click listener to the map
+      map.addListener("click", handleMapClick);
 
-    mapInstanceRef.current = map;
-
-      const centerOnUserLocation = () => {
-        if (hasRequestedUserLocationRef.current) return;
-        hasRequestedUserLocationRef.current = true;
-
-        if (typeof navigator === "undefined" || !navigator.geolocation) return;
-
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const map = mapInstanceRef.current;
-            const maps = window.google?.maps;
-            if (!map || !maps) return;
-
-            const userLatLng: google.maps.LatLngLiteral = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            };
-
-            const svg =
-              "data:image/svg+xml;utf-8," +
-              encodeURIComponent(
-                `<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'>
-                   <circle cx='14' cy='14' r='8' fill='#4285F4' stroke='#ffffff' stroke-width='2'/>
-                 </svg>`
-              );
-
-            if (userMarkerRef.current) {
-              userMarkerRef.current.setPosition(userLatLng);
-              userMarkerRef.current.setMap(map);
-            } else {
-              userMarkerRef.current = new maps.Marker({
-                position: userLatLng,
-                map,
-                title: "Your location",
-                icon: {
-                  url: svg,
-                  scaledSize: new maps.Size(28, 28),
-                  anchor: new maps.Point(14, 14),
-                },
-              });
-            }
-
-            map.setCenter(userLatLng);
-            map.setZoom(14);
-          },
-          (err) => {
-            console.info("Geolocation error on map:", err.message);
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 60_000,
-            timeout: 10000,
-          }
-        );
-      };
-
-      if (!placeId) {
-        centerOnUserLocation();
-      }
-
-      if (placeId) {
-        loadPlaceById(placeId, map);
-      }
+      maps.event.addListenerOnce(map, 'tilesloaded', () => {
+        if (placeId) {
+          loadPlaceById(placeId, map);
+        } else {
+          getCurrentLocation(map);
+        }
+      });
     };
 
     let checkGoogle: NodeJS.Timeout | null = null;
@@ -251,17 +329,6 @@ export default function Map({ placeId = undefined }: MapProps) {
     return () => {
       if (checkGoogle) clearInterval(checkGoogle);
       if (timeoutId) clearTimeout(timeoutId);
-
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
-        markerRef.current = null;
-      }
-      if (userMarkerRef.current) {
-        userMarkerRef.current.setMap(null);
-        userMarkerRef.current = null;
-      }
-
-      hasRequestedUserLocationRef.current = false;
     };
   }, [placeId]);
 
@@ -299,9 +366,7 @@ export default function Map({ placeId = undefined }: MapProps) {
       setIsPlaceSaved(true);
     } catch (error) {
       console.error("Error saving place:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save place"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save place");
     } finally {
       setIsSaving(false);
     }
@@ -328,13 +393,7 @@ export default function Map({ placeId = undefined }: MapProps) {
                 : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white"
             }`}
           >
-            {isSaving
-              ? "Saving..."
-              : isCheckingSaved
-              ? "Checking..."
-              : isPlaceSaved
-              ? "Saved"
-              : "Add Place"}
+            {isSaving ? "Saving..." : isCheckingSaved ? "Checking..." : isPlaceSaved ? "Saved" : "Add Place"}
           </button>
         </div>
       )}
