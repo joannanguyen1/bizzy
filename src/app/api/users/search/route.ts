@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q")?.trim();
 
-    if (!query || query.length === 0) {
+    if (!query || query.length < 2) {
       return NextResponse.json({ users: [] });
     }
 
