@@ -12,7 +12,6 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
-// TODO: Correctly route middleware to pages that are auth only
 export const config = {
   matcher: ["/map", "/dashboard/:path*", "/profile/:path*"],
 };
