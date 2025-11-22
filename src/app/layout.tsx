@@ -6,27 +6,27 @@ import "./globals.css";
 const sfPro = localFont({
   src: [
     {
-      path: "./fonts/SF-Pro-Display-Light.otf",
+      path: "./fonts/SF-Pro-Rounded-Light.otf",
       weight: "300",
       style: "normal",
     },
     {
-      path: "./fonts/SF-Pro-Display-Regular.otf",
+      path: "./fonts/SF-Pro-Rounded-Regular.otf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "./fonts/SF-Pro-Display-Medium.otf",
+      path: "./fonts/SF-Pro-Rounded-Medium.otf",
       weight: "500",
       style: "normal",
     },
     {
-      path: "./fonts/SF-Pro-Display-Semibold.otf",
+      path: "./fonts/SF-Pro-Rounded-Semibold.otf",
       weight: "600",
       style: "normal",
     },
     {
-      path: "./fonts/SF-Pro-Display-Bold.otf",
+      path: "./fonts/SF-Pro-Rounded-Bold.otf",
       weight: "700",
       style: "normal",
     },
@@ -45,10 +45,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${sfPro.variable} antialiased`}
-      >
+    <html lang="en" className={sfPro.variable}>
+      <body className="antialiased">
         {children}
         <Toaster />
       </body>

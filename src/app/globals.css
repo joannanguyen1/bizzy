@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --default-font-family: var(--font-sf-pro);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sf-pro);
