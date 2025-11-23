@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import FormInput from "@/components/FormInput";
 import { Button } from "@/components/ui/button";
 import BizzyLogo from "@/components/logo";
@@ -15,6 +14,8 @@ import { authClient } from "@/lib/auth-client";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import GoogleIcon from "@/components/GoogleIcon";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
+import { CheckIcon, XIcon, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const RegisterSchema = z.object({
   username: z
@@ -34,31 +35,73 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const { isGoogleLoading, signUpWithGoogle } = useGoogleAuth();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    control,
   } = useForm<RegisterForm>({
     resolver: zodResolver(RegisterSchema),
   });
 
   const router = useRouter();
+  const watchedUsername = useWatch({ control, name: "username" });
 
-  const onSubmit = async (data: RegisterForm) => {
-    setIsLoading(true);
-
-    try {
-      const checkResponse = await fetch(`/api/profile/check-username?username=${encodeURIComponent(data.username)}`);
-      const checkData = await checkResponse.json();
-
-      if (!checkData.available) {
-        toast.error("Username is already taken");
-        setIsLoading(false);
+  useEffect(() => {
+    const checkUsernameAvailability = async (username: string) => {
+      if (!username || username.length < 3) {
+        setUsernameAvailable(null);
         return;
       }
 
+      const usernameRegex = /^[a-zA-Z0-9]+$/;
+      if (!usernameRegex.test(username)) {
+        setUsernameAvailable(null);
+        return;
+      }
+
+      setCheckingUsername(true);
+      try {
+        const response = await fetch(`/api/profile/check-username?username=${encodeURIComponent(username.toLowerCase())}`);
+        const data = await response.json();
+        setUsernameAvailable(data.available);
+      } catch (error) {
+        console.error("Error checking username:", error);
+        setUsernameAvailable(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      if (watchedUsername) {
+        checkUsernameAvailability(watchedUsername);
+      } else {
+        setUsernameAvailable(null);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [watchedUsername]);
+
+  const onSubmit = async (data: RegisterForm) => {
+    if (usernameAvailable === false) {
+      toast.error("Username is already taken");
+      return;
+    }
+
+    if (usernameAvailable === null) {
+      toast.error("Please wait for username validation");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
       await authClient.signUp.email({
         email: data.email,
         password: data.password,
@@ -155,6 +198,49 @@ const RegisterPage = () => {
               placeholder="janedoe"
               errors={errors}
             />
+            <div className="min-h-3">
+              <AnimatePresence mode="wait">
+                {checkingUsername && (
+                  <motion.p
+                    key="checking"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="flex items-center gap-2 text-xs text-zinc-500"
+                  >
+                    <Loader2 className="size-3 animate-spin" />
+                    Checking availability...
+                  </motion.p>
+                )}
+                {!checkingUsername && usernameAvailable === true && watchedUsername && watchedUsername.length >= 3 && (
+                  <motion.p
+                    key="available"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="flex items-center gap-2 text-xs text-green-600"
+                  >
+                    <CheckIcon className="size-3" />
+                    Username is available
+                  </motion.p>
+                )}
+                {!checkingUsername && usernameAvailable === false && (
+                  <motion.p
+                    key="taken"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.15, ease: "easeInOut" }}
+                    className="flex items-center gap-2 text-xs text-red-600"
+                  >
+                    <XIcon className="size-3" />
+                    Username is already taken
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
           <FormInput
             label="Email"
@@ -169,7 +255,7 @@ const RegisterPage = () => {
             name="password"
             type="password"
             register={register}
-            placeholder="••••••••"
+            placeholder="Enter a unique password"
             errors={errors}
           />
 
