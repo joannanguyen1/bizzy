@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { user, follows } from "@/schema/auth-schema";
-import { eq, sql } from "drizzle-orm";
+import { user } from "@/schema/auth-schema";
+import { follow } from "@/schema/follow-schema";
+import { eq, and, sql } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const session = await auth.api.getSession({ headers: req.headers });
     const { userId } = await params;
 
     const userData = await db
@@ -26,16 +29,32 @@ export async function GET(
     const [followersResult, followingResult] = await Promise.all([
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followingId, userId)),
+        .from(follow)
+        .where(eq(follow.followingId, userId)),
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followerId, userId)),
+        .from(follow)
+        .where(eq(follow.followerId, userId)),
     ]);
 
     const followersCount = followersResult[0]?.count || 0;
     const followingCount = followingResult[0]?.count || 0;
+
+    let isFollowing = false;
+    if (session?.user?.id) {
+      const followCheck = await db
+        .select()
+        .from(follow)
+        .where(
+          and(
+            eq(follow.followerId, session.user.id),
+            eq(follow.followingId, userId)
+          )
+        )
+        .limit(1);
+      
+      isFollowing = followCheck.length > 0;
+    }
 
     return NextResponse.json({
       user: {
@@ -49,6 +68,7 @@ export async function GET(
       interests: userRecord.interests,
       followersCount,
       followingCount,
+      isFollowing,
     });
   } catch (err) {
     console.error("Error fetching profile:", err);
@@ -58,4 +78,3 @@ export async function GET(
     );
   }
 }
-

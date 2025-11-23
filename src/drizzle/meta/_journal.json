@@ -12,15 +12,8 @@
     {
       "idx": 1,
       "version": "7",
-      "when": 1763408290618,
-      "tag": "0001_material_mariko_yashida",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1763833809595,
-      "tag": "0002_marvelous_the_phantom",
+      "when": 1763838604239,
+      "tag": "0001_eminent_firebrand",
       "breakpoints": true
     }
   ]

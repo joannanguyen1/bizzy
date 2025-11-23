@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { follows } from "@/schema/auth-schema";
+import { follow } from "@/schema/follow-schema";
 import { eq, and } from "drizzle-orm";
 
 export async function GET(
@@ -27,11 +27,11 @@ export async function GET(
 
     const followRelation = await db
       .select()
-      .from(follows)
+      .from(follow)
       .where(
         and(
-          eq(follows.followerId, currentUserId),
-          eq(follows.followingId, targetUserId)
+          eq(follow.followerId, currentUserId),
+          eq(follow.followingId, targetUserId)
         )
       )
       .limit(1);
@@ -45,4 +45,3 @@ export async function GET(
     );
   }
 }
-

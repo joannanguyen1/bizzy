@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { follows, user } from "@/schema/auth-schema";
+import { follow } from "@/schema/follow-schema";
+import { user } from "@/schema/auth-schema";
 import { eq } from "drizzle-orm";
 
 export async function GET(
@@ -25,12 +26,12 @@ export async function GET(
         id: user.id,
         name: user.name,
         image: user.image,
-        createdAt: follows.createdAt,
+        createdAt: follow.createdAt,
       })
-      .from(follows)
-      .innerJoin(user, eq(follows.followerId, user.id))
-      .where(eq(follows.followingId, userId))
-      .orderBy(follows.createdAt);
+      .from(follow)
+      .innerJoin(user, eq(follow.followerId, user.id))
+      .where(eq(follow.followingId, userId))
+      .orderBy(follow.createdAt);
 
     return NextResponse.json({ followers });
   } catch (error) {
@@ -41,4 +42,3 @@ export async function GET(
     );
   }
 }
-

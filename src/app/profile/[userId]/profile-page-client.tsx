@@ -26,6 +26,7 @@ interface ProfileData {
   };
   followersCount: number;
   followingCount: number;
+  isFollowing: boolean;
 }
 
 interface SavedPlace {
@@ -116,15 +117,7 @@ export default function ProfilePageClient({
         }
         const placesData = await placesResponse.json();
         const fetchedPlaces = placesData.places || [];
-
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Fetched places:", fetchedPlaces.map((p: SavedPlace) => ({
-            name: p.name,
-            placeId: p.placeId,
-            hasPlaceId: hasValidPlaceId(p.placeId)
-          })));
-        }
-
+        
         setPlaces(fetchedPlaces);
       } catch (error) {
         console.error("Error fetching profile data:", error);
@@ -167,7 +160,6 @@ export default function ProfilePageClient({
   return (
     <LoggedInLayout session={session}>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Profile Header */}
         <Card className="mb-6">
           <CardHeader>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -233,7 +225,6 @@ export default function ProfilePageClient({
           </CardHeader>
         </Card>
 
-        {/* Places Feed */}
         <div className="space-y-4">
           <h2 className="text-xl font-semibold mb-4">
             {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
@@ -326,4 +317,3 @@ export default function ProfilePageClient({
     </LoggedInLayout>
   );
 }
-

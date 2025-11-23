@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { follows, user } from "@/schema/auth-schema";
+import { follow } from "@/schema/follow-schema";
+import { user } from "@/schema/auth-schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export async function POST(
@@ -40,11 +41,11 @@ export async function POST(
 
     const existingFollow = await db
       .select()
-      .from(follows)
+      .from(follow)
       .where(
         and(
-          eq(follows.followerId, currentUserId),
-          eq(follows.followingId, targetUserId)
+          eq(follow.followerId, currentUserId),
+          eq(follow.followingId, targetUserId)
         )
       )
       .limit(1);
@@ -56,7 +57,7 @@ export async function POST(
       );
     }
 
-    await db.insert(follows).values({
+    await db.insert(follow).values({
       followerId: currentUserId,
       followingId: targetUserId,
     });
@@ -64,12 +65,12 @@ export async function POST(
     const [followersCount, followingCount] = await Promise.all([
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followingId, targetUserId)),
+        .from(follow)
+        .where(eq(follow.followingId, targetUserId)),
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followerId, targetUserId)),
+        .from(follow)
+        .where(eq(follow.followerId, targetUserId)),
     ]);
 
     return NextResponse.json({
@@ -104,23 +105,23 @@ export async function DELETE(
     const currentUserId = session.user.id;
 
     await db
-      .delete(follows)
+      .delete(follow)
       .where(
         and(
-          eq(follows.followerId, currentUserId),
-          eq(follows.followingId, targetUserId)
+          eq(follow.followerId, currentUserId),
+          eq(follow.followingId, targetUserId)
         )
       );
 
     const [followersCount, followingCount] = await Promise.all([
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followingId, targetUserId)),
+        .from(follow)
+        .where(eq(follow.followingId, targetUserId)),
       db
         .select({ count: sql<number>`count(*)::int` })
-        .from(follows)
-        .where(eq(follows.followerId, targetUserId)),
+        .from(follow)
+        .where(eq(follow.followerId, targetUserId)),
     ]);
 
     return NextResponse.json({
@@ -137,4 +138,3 @@ export async function DELETE(
     );
   }
 }
-
