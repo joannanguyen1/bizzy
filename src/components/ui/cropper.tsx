@@ -563,38 +563,31 @@ const CropperRoot: React.FC<CropperRootProps> = ({
       if (imageWrapperWidth <= 0) return
       let targetOffsetX = latestRestrictedOffsetRef.current.x
       let targetOffsetY = latestRestrictedOffsetRef.current.y
-      let moved = false
       switch (e.key) {
         case "ArrowUp":
           targetOffsetY += keyboardStep
-          moved = true
           break
         case "ArrowDown":
           targetOffsetY -= keyboardStep
-          moved = true
           break
         case "ArrowLeft":
           targetOffsetX += keyboardStep
-          moved = true
           break
         case "ArrowRight":
           targetOffsetX -= keyboardStep
-          moved = true
           break
         default:
           return
       }
-      if (moved) {
-        e.preventDefault()
-        const restricted = restrictOffset(targetOffsetX, targetOffsetY, effectiveZoom)
-        if (
-          restricted.x !== latestRestrictedOffsetRef.current.x ||
-          restricted.y !== latestRestrictedOffsetRef.current.y
-        ) {
-          latestRestrictedOffsetRef.current = restricted
-          setOffsetX(restricted.x)
-          setOffsetY(restricted.y)
-        }
+      e.preventDefault()
+      const restricted = restrictOffset(targetOffsetX, targetOffsetY, effectiveZoom)
+      if (
+        restricted.x !== latestRestrictedOffsetRef.current.x ||
+        restricted.y !== latestRestrictedOffsetRef.current.y
+      ) {
+        latestRestrictedOffsetRef.current = restricted
+        setOffsetX(restricted.x)
+        setOffsetY(restricted.y)
       }
     },
     [keyboardStep, imageWrapperWidth, restrictOffset, effectiveZoom]
