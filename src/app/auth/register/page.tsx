@@ -152,7 +152,7 @@ const RegisterPage = () => {
               name="username"
               type="text"
               register={register}
-              placeholder="Jane Doe"
+              placeholder="janedoe"
               errors={errors}
             />
           </div>

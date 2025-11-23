@@ -658,14 +658,15 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 ))}
               </div>
               <DialogFooter>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleNextStep}
-                  disabled={(step === 1 && (!firstName.trim() || !lastName.trim())) || (step === 2 && selectedInterests.length === 0)}
-                >
-                  Skip
-                </Button>
+                {step === 3 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleNextStep}
+                  >
+                    Skip
+                  </Button>
+                )}
                 {step < totalSteps ? (
                   <Button
                     className="group"

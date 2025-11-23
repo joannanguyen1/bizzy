@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { user } from "@/schema/auth-schema"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
-import { ne, isNotNull } from "drizzle-orm"
+import { ne } from "drizzle-orm"
 
 export async function GET(request: NextRequest) {
   try {

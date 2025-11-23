@@ -15,6 +15,13 @@
       "when": 1763838604239,
       "tag": "0001_eminent_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763874698787,
+      "tag": "0002_quiet_psynapse",
+      "breakpoints": true
     }
   ]
 }

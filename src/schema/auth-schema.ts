@@ -3,7 +3,6 @@ import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 const capitalizeFirstLetter = (str: string) => {
-  if (!str) return str;
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
