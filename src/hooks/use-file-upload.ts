@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { randomUUID } from "crypto"
 
 interface FileWithPreview {
   id: string
@@ -96,7 +95,7 @@ export function useFileUpload(
       const filesToAdd = validFiles.slice(0, maxFiles - files.length)
 
       const filesWithPreview: FileWithPreview[] = filesToAdd.map((file) => ({
-        id: randomUUID(),
+        id: crypto.randomUUID(),
         file,
         preview: URL.createObjectURL(file),
       }))

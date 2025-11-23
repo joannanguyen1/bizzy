@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { nameSchema } from "@/schema/auth-schema"
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog"
 
 type Area = { x: number; y: number; width: number; height: number }
 
@@ -441,22 +442,20 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
 
   return (
     <>
-      <Dialog open={open} onOpenChange={() => { }}>
-        <DialogContent
+      <AlertDialog open={open}>
+        <AlertDialogContent
           className="gap-0 p-0 sm:max-w-2xl"
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <DialogDescription className="sr-only">
+          <AlertDialogDescription className="sr-only">
             Complete your profile setup
-          </DialogDescription>
+          </AlertDialogDescription>
           <div className="space-y-6 px-6 pb-6 pt-6">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">{stepContent[step - 1].title}</DialogTitle>
-              <DialogDescription className="text-base">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-2xl">{stepContent[step - 1].title}</AlertDialogTitle>
+              <AlertDialogDescription className="text-base">
                 {stepContent[step - 1].description}
-              </DialogDescription>
-            </DialogHeader>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
 
             <div className="min-h-[300px]">
               {step === 1 && (
@@ -753,8 +752,8 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
               </DialogFooter>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCancelCrop()}>
         <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
