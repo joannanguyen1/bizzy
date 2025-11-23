@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon } from "lucide-react";
@@ -69,7 +68,6 @@ export default function ProfilePageClient({
   currentUserId,
   session,
 }: ProfilePageClientProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [places, setPlaces] = useState<SavedPlace[]>([]);
@@ -117,7 +115,7 @@ export default function ProfilePageClient({
         }
         const placesData = await placesResponse.json();
         const fetchedPlaces = placesData.places || [];
-        
+
         setPlaces(fetchedPlaces);
       } catch (error) {
         console.error("Error fetching profile data:", error);
