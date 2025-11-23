@@ -61,7 +61,9 @@ export const user = pgTable("user", {
     .notNull(),
   username: text("username").unique().notNull(),
   displayUsername: text("display_username"),
-});
+}, (table) => [
+  index("user_username_idx").on(table.username),
+]);
 
 export const session = pgTable(
   "session",
