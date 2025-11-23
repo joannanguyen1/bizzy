@@ -13,6 +13,8 @@ import {
 import { toast } from "sonner"
 import { useFileUpload } from "@/hooks/use-file-upload"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Cropper,
   CropperCropArea,
@@ -130,6 +132,8 @@ interface OnboardingDialogProps {
 
 export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogProps) {
   const [step, setStep] = useState(1)
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
@@ -273,12 +277,35 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     }
   }
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step === 1) {
-      setStep(2)
+      if (firstName.trim() && lastName.trim()) {
+        try {
+          const response = await fetch("/api/profile/update-name", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId,
+              name: `${firstName.trim()} ${lastName.trim()}`,
+            }),
+          })
+          if (response.ok) {
+            setStep(2)
+          } else {
+            toast.error("Failed to update name")
+          }
+        } catch (error) {
+          console.error("Error updating name:", error)
+          toast.error("Failed to update name")
+        }
+      }
     } else if (step === 2) {
-      fetchSuggestedUsers()
       setStep(3)
+    } else if (step === 3) {
+      fetchSuggestedUsers()
+      setStep(4)
     }
   }
 
@@ -332,9 +359,13 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     }
   }
 
-  const totalSteps = 3
+  const totalSteps = 4
 
   const stepContent = [
+    {
+      title: "Tell Us Your Name",
+      description: "Let's get to know you better",
+    },
     {
       title: "Choose Your Interests",
       description: "Select the types of places you'd like to discover",
@@ -370,6 +401,35 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
 
             <div className="min-h-[300px]">
               {step === 1 && (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="Enter your first name"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Enter your last name"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
                 <div className="grid grid-cols-3 gap-3">
                   {INTEREST_CATEGORIES.map((category) => (
                     <Card
@@ -457,8 +517,15 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 </div>
               )}
 
-              {step === 3 && (
+              {step === 4 && (
                 <div className="space-y-4">
+                  {followingUsers.size === 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-amber-800">
+                        Follow at least 1 person to complete onboarding
+                      </p>
+                    </div>
+                  )}
                   {loadingUsers ? (
                     <p className="text-center text-muted-foreground">Loading users...</p>
                   ) : suggestedUsers.length === 0 ? (
@@ -525,7 +592,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                   type="button"
                   variant="ghost"
                   onClick={handleNextStep}
-                  disabled={step === 1 && selectedInterests.length === 0}
+                  disabled={(step === 1 && (!firstName.trim() || !lastName.trim())) || (step === 2 && selectedInterests.length === 0)}
                 >
                   Skip
                 </Button>
@@ -534,7 +601,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                     className="group"
                     type="button"
                     onClick={handleNextStep}
-                    disabled={step === 1 && selectedInterests.length === 0}
+                    disabled={(step === 1 && (!firstName.trim() || !lastName.trim())) || (step === 2 && selectedInterests.length === 0)}
                   >
                     Next
                     <ArrowRight
@@ -548,7 +615,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                   <Button
                     type="button"
                     onClick={handleComplete}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || followingUsers.size === 0}
                   >
                     {isSubmitting ? "Completing..." : "Complete"}
                   </Button>
