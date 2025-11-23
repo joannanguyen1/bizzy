@@ -79,7 +79,7 @@ export function FollowersDialog({
                   className="flex items-center justify-between gap-3"
                 >
                   <Link
-                    href={`/profile/${user.id}`}
+                    href={`/profile/${user.username ? `@${user.username}` : user.id}`}
                     onClick={() => onOpenChange(false)}
                     className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-70 transition-opacity cursor-pointer"
                   >

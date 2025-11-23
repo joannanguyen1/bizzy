@@ -52,7 +52,7 @@ export async function GET(
           )
         )
         .limit(1);
-      
+
       isFollowing = followCheck.length > 0;
     }
 
@@ -60,6 +60,7 @@ export async function GET(
       user: {
         id: userRecord.id,
         name: userRecord.name,
+        username: userRecord.username,
         email: userRecord.email,
         image: userRecord.image,
         createdAt: userRecord.createdAt,

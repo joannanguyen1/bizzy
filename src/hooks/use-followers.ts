@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 interface UserItem {
   id: string;
   name: string;
+  username: string | null;
   image: string | null;
   createdAt: string;
 }

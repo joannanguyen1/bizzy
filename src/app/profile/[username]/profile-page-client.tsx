@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon } from "lucide-react";
@@ -21,6 +22,7 @@ interface ProfileData {
     name: string;
     email: string;
     image: string | null;
+    username: string | null;
     createdAt: string;
   };
   followersCount: number;
@@ -55,7 +57,7 @@ function hasValidPlaceId(placeId: string | null): boolean {
 }
 
 interface ProfilePageClientProps {
-  userId: string;
+  username: string;
   currentUserId: string;
   session: {
     session: Session;
@@ -64,18 +66,21 @@ interface ProfilePageClientProps {
 }
 
 export default function ProfilePageClient({
-  userId,
+  username,
   currentUserId,
   session,
 }: ProfilePageClientProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [places, setPlaces] = useState<SavedPlace[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
   const prefetchFollowers = () => {
+    if (!userId) return;
     queryClient.prefetchQuery({
       queryKey: ["followers", userId],
       queryFn: async () => {
@@ -88,6 +93,7 @@ export default function ProfilePageClient({
   };
 
   const prefetchFollowing = () => {
+    if (!userId) return;
     queryClient.prefetchQuery({
       queryKey: ["following", userId],
       queryFn: async () => {
@@ -102,14 +108,31 @@ export default function ProfilePageClient({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const profileResponse = await fetch(`/api/profile/${userId}`);
+        const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
+
+        const userResponse = await fetch(`/api/users/by-username/${cleanUsername}`);
+        if (!userResponse.ok) {
+          router.push("/map");
+          return;
+        }
+        const userData = await userResponse.json();
+        const fetchedUserId = userData.user.id;
+        setUserId(fetchedUserId);
+
+        const profileResponse = await fetch(`/api/profile/${fetchedUserId}`);
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch profile");
         }
         const profile = await profileResponse.json();
-        setProfileData(profile);
+        setProfileData({
+          ...profile,
+          user: {
+            ...profile.user,
+            username: userData.user.username,
+          },
+        });
 
-        const placesResponse = await fetch(`/api/profile/${userId}/places`);
+        const placesResponse = await fetch(`/api/profile/${fetchedUserId}/places`);
         if (!placesResponse.ok) {
           throw new Error("Failed to fetch places");
         }
@@ -125,9 +148,9 @@ export default function ProfilePageClient({
     };
 
     fetchData();
-  }, [userId]);
+  }, [username, router]);
 
-  if (isLoading || !profileData) {
+  if (isLoading || !profileData || !userId) {
     return (
       <LoggedInLayout session={session}>
         <div className="flex items-center justify-center h-screen">
@@ -146,7 +169,13 @@ export default function ProfilePageClient({
         const profileResponse = await fetch(`/api/profile/${userId}`);
         if (profileResponse.ok) {
           const profile = await profileResponse.json();
-          setProfileData(profile);
+          setProfileData({
+            ...profile,
+            user: {
+              ...profile.user,
+              username: user.username,
+            },
+          });
         }
       } catch (error) {
         console.error("Error refreshing profile data:", error);
@@ -181,7 +210,9 @@ export default function ProfilePageClient({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <CardTitle className="text-2xl">{user.name}</CardTitle>
+                  <div>
+                    <CardTitle className="text-2xl">{user.name}</CardTitle>
+                  </div>
                   {!isOwnProfile && (
                     <FollowButton
                       userId={userId}
@@ -189,7 +220,7 @@ export default function ProfilePageClient({
                     />
                   )}
                 </div>
-                <CardDescription className="mb-4">{user.email}</CardDescription>
+                <CardDescription className={cn("mb-4", !user.username && "opacity-0")}>@{user.username}</CardDescription>
                 <div className="flex gap-6 text-sm">
                   <button
                     onClick={() => setFollowersDialogOpen(true)}
@@ -297,21 +328,26 @@ export default function ProfilePageClient({
         </div>
       </div>
 
-      <FollowersDialog
-        open={followersDialogOpen}
-        onOpenChange={setFollowersDialogOpen}
-        userId={userId}
-        currentUserId={currentUserId}
-        type="followers"
-      />
+      {userId && (
+        <>
+          <FollowersDialog
+            open={followersDialogOpen}
+            onOpenChange={setFollowersDialogOpen}
+            userId={userId}
+            currentUserId={currentUserId}
+            type="followers"
+          />
 
-      <FollowersDialog
-        open={followingDialogOpen}
-        onOpenChange={setFollowingDialogOpen}
-        userId={userId}
-        currentUserId={currentUserId}
-        type="following"
-      />
+          <FollowersDialog
+            open={followingDialogOpen}
+            onOpenChange={setFollowingDialogOpen}
+            userId={userId}
+            currentUserId={currentUserId}
+            type="following"
+          />
+        </>
+      )}
     </LoggedInLayout>
   );
 }
+

@@ -6,7 +6,7 @@ import ProfilePageClient from "./profile-page-client";
 export default async function ProfilePage({
   params,
 }: {
-  params: Promise<{ userId: string }>;
+  params: Promise<{ username: string }>;
 }) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -16,11 +16,11 @@ export default async function ProfilePage({
     redirect("/auth/signin");
   }
 
-  const { userId } = await params;
+  const { username } = await params;
 
   return (
     <ProfilePageClient
-      userId={userId}
+      username={username}
       currentUserId={session.user.id}
       session={session}
     />

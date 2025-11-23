@@ -33,6 +33,18 @@ export const updateNameSchema = z.object({
 export type NameInput = z.infer<typeof nameSchema>;
 export type UpdateNameInput = z.infer<typeof updateNameSchema>;
 
+export const usernameSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be 20 characters or less")
+    .regex(/^[a-zA-Z0-9]+$/, "Username can only contain letters and numbers")
+    .transform((val) => val.toLowerCase()),
+});
+
+export type UsernameInput = z.infer<typeof usernameSchema>;
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

@@ -49,6 +49,7 @@ type SearchTab = "places" | "members"
 interface Member {
   id: string
   name: string
+  username: string | null
   email: string
   image: string | null
   createdAt: string
@@ -230,8 +231,8 @@ export default function PlacesSearchCommand() {
     setSearchQuery("")
   }
 
-  const handleSelectMember = (userId: string) => {
-    router.push(`/profile/${userId}`)
+  const handleSelectMember = (member: Member) => {
+    router.push(`/profile/${member.username ? `@${member.username}` : member.id}`)
     setOpen(false)
     setSearchQuery("")
   }
@@ -371,7 +372,7 @@ export default function PlacesSearchCommand() {
               {members.map((member) => (
                 <CommandItem
                   key={member.id}
-                  onSelect={() => handleSelectMember(member.id)}
+                  onSelect={() => handleSelectMember(member)}
                   className="cursor-pointer flex items-center gap-3"
                 >
                   <UserIcon className="h-4 w-4 shrink-0" />

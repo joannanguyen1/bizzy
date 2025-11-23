@@ -84,6 +84,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -93,6 +94,9 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
           const userData = await response.json();
           if (!userData.onboardingCompleted) {
             setShowOnboarding(true);
+          }
+          if (userData.user?.username) {
+            setUsername(userData.user.username);
           }
         }
       } catch (error) {
@@ -128,7 +132,8 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     });
   };
 
-  // TODO: Correctly route links to the correct pages
+  const profileHref = username ? `/profile/@${username}` : `/profile/${session.user.id}`;
+
   const links = [
     {
       label: "Dashboard",
@@ -146,7 +151,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     },
     {
       label: "Profile",
-      href: `/profile/${session.user.id}`,
+      href: profileHref,
       icon: (
         <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
@@ -240,7 +245,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                     <span>Favorites</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/profile/${session.user.id}`} className="flex items-center gap-2">
+                    <Link href={profileHref} className="flex items-center gap-2">
                       <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
                       <span>My Profile</span>
                     </Link>

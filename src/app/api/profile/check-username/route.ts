@@ -15,10 +15,26 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    const normalizedUsername = username.toLowerCase().trim();
+
+    if (!/^[a-z0-9]+$/.test(normalizedUsername)) {
+      return NextResponse.json(
+        { error: "Username can only contain letters and numbers", available: false },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedUsername.length < 3 || normalizedUsername.length > 20) {
+      return NextResponse.json(
+        { error: "Username must be 3-20 characters", available: false },
+        { status: 400 }
+      );
+    }
+
     const existingUser = await db
       .select({ id: user.id })
       .from(user)
-      .where(eq(user.username, username))
+      .where(eq(user.username, normalizedUsername))
       .limit(1);
 
     return NextResponse.json({ available: existingUser.length === 0 });

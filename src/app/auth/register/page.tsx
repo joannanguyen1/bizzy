@@ -17,7 +17,13 @@ import GoogleIcon from "@/components/GoogleIcon";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 const RegisterSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be 20 characters or less")
+    .regex(/^[a-zA-Z0-9]+$/, "Username can only contain letters and numbers")
+    .transform((val) => val.toLowerCase()),
   email: z.string().email("Invalid email address").min(1, "Email is required"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
@@ -44,8 +50,20 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
+      const checkResponse = await fetch(`/api/profile/check-username?username=${encodeURIComponent(data.username)}`);
+      const checkData = await checkResponse.json();
+
+      if (!checkData.available) {
+        toast.error("Username is already taken");
+        setIsLoading(false);
+        return;
+      }
+
       await authClient.signUp.email({
-        ...data,
+        email: data.email,
+        password: data.password,
+        name: data.username,
+        username: data.username,
         fetchOptions: {
           onResponse: () => {
             setIsLoading(false);
@@ -69,6 +87,7 @@ const RegisterPage = () => {
       });
     } catch (error) {
       console.error("An error occurred during registration:", error);
+      toast.error("Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -127,14 +146,16 @@ const RegisterPage = () => {
         </div>
 
         <div className="space-y-4">
-          <FormInput
-            label="Name"
-            name="name"
-            type="text"
-            register={register}
-            placeholder="Jane Doe"
-            errors={errors}
-          />
+          <div>
+            <FormInput
+              label="Username"
+              name="username"
+              type="text"
+              register={register}
+              placeholder="Jane Doe"
+              errors={errors}
+            />
+          </div>
           <FormInput
             label="Email"
             name="email"
