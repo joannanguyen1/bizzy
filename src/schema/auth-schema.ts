@@ -12,12 +12,14 @@ export const nameSchema = z.object({
     .trim()
     .min(1, "First name is required")
     .max(15, "First name must be 15 characters or less")
+    .regex(/^[a-zA-Z]+$/, "First name must not contain special characters")
     .transform(capitalizeFirstLetter),
   lastName: z
     .string()
     .trim()
     .min(1, "Last name is required")
     .max(15, "Last name must be 15 characters or less")
+    .regex(/^[a-zA-Z]+$/, "Last name must not contain special characters")
     .transform(capitalizeFirstLetter),
 });
 

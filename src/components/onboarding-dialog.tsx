@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import {
   ArrowLeftIcon,
   ArrowRight,
@@ -280,6 +280,19 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     }
   }
 
+  const isStep1Valid = useMemo(() => {
+    if (!firstName.trim() || !lastName.trim()) {
+      return false
+    }
+
+    const validation = nameSchema.safeParse({
+      firstName: firstName,
+      lastName: lastName,
+    })
+
+    return validation.success
+  }, [firstName, lastName])
+
   const validateNames = () => {
     setFirstNameError("")
     setLastNameError("")
@@ -358,7 +371,11 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       })
 
       if (!response.ok) {
-        throw new Error("Failed to update follow status")
+        const data = await response.json()
+        if (data.error === "Already following this user") {
+          return
+        }
+        throw new Error(data.error || "Failed to update follow status")
       }
     } catch (error) {
       setFollowingUsers((prev) => {
@@ -453,8 +470,29 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                         placeholder="Enter your first name"
                         value={firstName}
                         onChange={(e) => {
-                          setFirstName(e.target.value)
-                          setFirstNameError("")
+                          const value = e.target.value
+                          setFirstName(value)
+
+                          if (value.trim()) {
+                            const result = nameSchema.shape.firstName.safeParse(value)
+                            if (!result.success) {
+                              setFirstNameError(result.error.issues[0]?.message || "Invalid first name")
+                            } else {
+                              setFirstNameError("")
+                            }
+                          } else {
+                            setFirstNameError("")
+                          }
+                        }}
+                        onBlur={() => {
+                          if (firstName.trim()) {
+                            const result = nameSchema.shape.firstName.safeParse(firstName)
+                            if (!result.success) {
+                              setFirstNameError(result.error.issues[0]?.message || "Invalid first name")
+                            }
+                          } else {
+                            setFirstNameError("First name is required")
+                          }
                         }}
                         className={cn("w-full", firstNameError && "border-red-500")}
                         maxLength={15}
@@ -478,8 +516,29 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                         placeholder="Enter your last name"
                         value={lastName}
                         onChange={(e) => {
-                          setLastName(e.target.value)
-                          setLastNameError("")
+                          const value = e.target.value
+                          setLastName(value)
+
+                          if (value.trim()) {
+                            const result = nameSchema.shape.lastName.safeParse(value)
+                            if (!result.success) {
+                              setLastNameError(result.error.issues[0]?.message || "Invalid last name")
+                            } else {
+                              setLastNameError("")
+                            }
+                          } else {
+                            setLastNameError("")
+                          }
+                        }}
+                        onBlur={() => {
+                          if (lastName.trim()) {
+                            const result = nameSchema.shape.lastName.safeParse(lastName)
+                            if (!result.success) {
+                              setLastNameError(result.error.issues[0]?.message || "Invalid last name")
+                            }
+                          } else {
+                            setLastNameError("Last name is required")
+                          }
                         }}
                         className={cn("w-full", lastNameError && "border-red-500")}
                         maxLength={15}
@@ -672,7 +731,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                     className="group"
                     type="button"
                     onClick={handleNextStep}
-                    disabled={(step === 1 && (!firstName.trim() || !lastName.trim())) || (step === 2 && selectedInterests.length === 0)}
+                    disabled={(step === 1 && !isStep1Valid) || (step === 2 && selectedInterests.length === 0)}
                   >
                     Next
                     <ArrowRight
