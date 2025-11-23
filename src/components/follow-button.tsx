@@ -84,7 +84,7 @@ export function FollowButton({
 
   return (
     <Button
-      variant={isFollowing ? "outline" : variant}
+      variant={isFollowing ? "default" : "outline"}
       size={size}
       onClick={handleFollowToggle}
       disabled={isLoading}

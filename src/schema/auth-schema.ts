@@ -1,5 +1,37 @@
 import { relations } from "drizzle-orm";
 import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { z } from "zod";
+
+const capitalizeFirstLetter = (str: string) => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+export const nameSchema = z.object({
+  firstName: z
+    .string()
+    .trim()
+    .min(1, "First name is required")
+    .max(15, "First name must be 15 characters or less")
+    .transform(capitalizeFirstLetter),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, "Last name is required")
+    .max(15, "Last name must be 15 characters or less")
+    .transform(capitalizeFirstLetter),
+});
+
+export const updateNameSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(31, "Name is too long"),
+});
+
+export type NameInput = z.infer<typeof nameSchema>;
+export type UpdateNameInput = z.infer<typeof updateNameSchema>;
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),

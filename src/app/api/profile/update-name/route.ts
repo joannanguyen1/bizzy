@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
-import { user } from "@/schema/auth-schema";
+import { user, updateNameSchema } from "@/schema/auth-schema";
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,22 +17,32 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name } = body;
+    const validation = updateNameSchema.safeParse(body);
 
-    if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json({ error: "Invalid name" }, { status: 400 });
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Invalid input", details: validation.error.issues },
+        { status: 400 }
+      );
     }
 
+    const { name } = validation.data;
     await db
       .update(user)
       .set({
-        name: name.trim(),
+        name,
       })
       .where(eq(user.id, session.user.id));
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, name });
   } catch (error) {
     console.error("Error updating name:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: "Failed to update name" },
       { status: 500 }

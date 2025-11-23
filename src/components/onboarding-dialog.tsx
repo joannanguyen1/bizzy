@@ -33,6 +33,7 @@ import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
+import { nameSchema } from "@/schema/auth-schema"
 
 type Area = { x: number; y: number; width: number; height: number }
 
@@ -134,6 +135,8 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
   const [step, setStep] = useState(1)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
+  const [firstNameError, setFirstNameError] = useState("")
+  const [lastNameError, setLastNameError] = useState("")
   const [selectedInterests, setSelectedInterests] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
@@ -277,9 +280,33 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
     }
   }
 
+  const validateNames = () => {
+    setFirstNameError("")
+    setLastNameError("")
+
+    const validation = nameSchema.safeParse({
+      firstName: firstName,
+      lastName: lastName,
+    })
+
+    if (!validation.success) {
+      const errors = validation.error.flatten().fieldErrors
+      if (errors.firstName?.[0]) {
+        setFirstNameError(errors.firstName[0])
+      }
+      if (errors.lastName?.[0]) {
+        setLastNameError(errors.lastName[0])
+      }
+      return null
+    }
+
+    return validation.data
+  }
+
   const handleNextStep = async () => {
     if (step === 1) {
-      if (firstName.trim() && lastName.trim()) {
+      const validatedData = validateNames()
+      if (validatedData) {
         try {
           const response = await fetch("/api/profile/update-name", {
             method: "POST",
@@ -287,14 +314,17 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              userId,
-              name: `${firstName.trim()} ${lastName.trim()}`,
+              name: `${validatedData.firstName} ${validatedData.lastName}`,
             }),
           })
+
           if (response.ok) {
+            setFirstName(validatedData.firstName)
+            setLastName(validatedData.lastName)
             setStep(2)
           } else {
-            toast.error("Failed to update name")
+            const data = await response.json()
+            toast.error(data.error || "Failed to update name")
           }
         } catch (error) {
           console.error("Error updating name:", error)
@@ -310,26 +340,38 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
   }
 
   const handleFollowUser = async (targetUserId: string) => {
-    try {
-      const isFollowing = followingUsers.has(targetUserId)
+    const isCurrentlyFollowing = followingUsers.has(targetUserId)
 
+    setFollowingUsers((prev) => {
+      const updated = new Set(prev)
+      if (isCurrentlyFollowing) {
+        updated.delete(targetUserId)
+      } else {
+        updated.add(targetUserId)
+      }
+      return updated
+    })
+
+    try {
       const response = await fetch(`/api/users/${targetUserId}/follow`, {
-        method: isFollowing ? "DELETE" : "POST",
+        method: isCurrentlyFollowing ? "DELETE" : "POST",
       })
 
-      if (response.ok) {
-        setFollowingUsers((prev) => {
-          const updated = new Set(prev)
-          if (isFollowing) {
-            updated.delete(targetUserId)
-          } else {
-            updated.add(targetUserId)
-          }
-          return updated
-        })
+      if (!response.ok) {
+        throw new Error("Failed to update follow status")
       }
     } catch (error) {
+      setFollowingUsers((prev) => {
+        const updated = new Set(prev)
+        if (isCurrentlyFollowing) {
+          updated.add(targetUserId)
+        } else {
+          updated.delete(targetUserId)
+        }
+        return updated
+      })
       console.error("Error following user:", error)
+      toast.error("Failed to update follow status")
     }
   }
 
@@ -410,9 +452,23 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                         type="text"
                         placeholder="Enter your first name"
                         value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full"
+                        onChange={(e) => {
+                          setFirstName(e.target.value)
+                          setFirstNameError("")
+                        }}
+                        className={cn("w-full", firstNameError && "border-red-500")}
+                        maxLength={15}
+                        aria-invalid={!!firstNameError}
+                        aria-describedby={firstNameError ? "firstName-error" : undefined}
                       />
+                      {firstNameError && (
+                        <p id="firstName-error" className="text-sm text-red-500">
+                          {firstNameError}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {firstName.length}/15 characters
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Last Name</Label>
@@ -421,9 +477,23 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                         type="text"
                         placeholder="Enter your last name"
                         value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="w-full"
+                        onChange={(e) => {
+                          setLastName(e.target.value)
+                          setLastNameError("")
+                        }}
+                        className={cn("w-full", lastNameError && "border-red-500")}
+                        maxLength={15}
+                        aria-invalid={!!lastNameError}
+                        aria-describedby={lastNameError ? "lastName-error" : undefined}
                       />
+                      {lastNameError && (
+                        <p id="lastName-error" className="text-sm text-red-500">
+                          {lastNameError}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        {lastName.length}/15 characters
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -466,7 +536,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                 </div>
               )}
 
-              {step === 2 && (
+              {step === 3 && (
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative inline-flex">
                     <button
