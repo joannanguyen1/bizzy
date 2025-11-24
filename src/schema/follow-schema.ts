@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, primaryKey, index } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export const follow = pgTable(

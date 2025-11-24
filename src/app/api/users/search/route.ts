@@ -8,7 +8,7 @@ import { ilike, or, and, ne } from "drizzle-orm";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -20,11 +20,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ users: [] });
     }
 
-    // Search users by name or email (excluding the current user)
     const users = await db
       .select({
         id: user.id,
         name: user.name,
+        username: user.username,
         email: user.email,
         image: user.image,
         createdAt: user.createdAt,
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       .from(user)
       .where(
         and(
-          ne(user.id, session.user.id), // Exclude current user
+          ne(user.id, session.user.id),
           or(
             ilike(user.name, `%${query}%`),
             ilike(user.email, `%${query}%`)

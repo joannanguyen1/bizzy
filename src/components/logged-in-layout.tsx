@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon, MapPinIcon } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +27,7 @@ import {
 import BoringAvatar from "boring-avatars";
 import { Session, User } from "better-auth/types";
 import PlacesSearchCommand from "@/components/places-search-command";
+import { OnboardingDialog } from "@/components/onboarding-dialog";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -81,12 +82,43 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const response = await fetch(`/api/profile/${session.user.id}`);
+        if (response.ok) {
+          const userData = await response.json();
+          if (!userData.onboardingCompleted) {
+            setShowOnboarding(true);
+          }
+          if (userData.user?.username) {
+            setUsername(userData.user.username);
+          }
+        }
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+      } finally {
+        setOnboardingChecked(true);
+      }
+    };
+
+    checkOnboardingStatus();
+  }, [session.user.id]);
 
   const handleDropdownChange = (isOpen: boolean) => {
     setDropdownOpen(isOpen);
     if (!isOpen) {
       setOpen(false);
     }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    router.refresh();
   };
 
   const handleLogout = async () => {
@@ -100,7 +132,8 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     });
   };
 
-  // TODO: Correctly route links to the correct pages
+  const profileHref = username ? `/profile/@${username}` : `/profile/${session.user.id}`;
+
   const links = [
     {
       label: "Dashboard",
@@ -118,7 +151,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     },
     {
       label: "Profile",
-      href: `/profile/${session.user.id}`,
+      href: profileHref,
       icon: (
         <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
@@ -133,12 +166,18 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   ];
 
   return (
-    <div
-      className={cn(
-        "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
-        "h-screen"
-      )}
-    >
+    <>
+      <OnboardingDialog
+        open={showOnboarding && onboardingChecked}
+        userId={session.user.id}
+        onComplete={handleOnboardingComplete}
+      />
+      <div
+        className={cn(
+          "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto border border-neutral-200 dark:border-neutral-700 overflow-hidden",
+          "h-screen"
+        )}
+      >
       <Sidebar open={open} setOpen={dropdownOpen ? undefined : setOpen}>
         <SidebarBody className="justify-between gap-10">
           <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -206,7 +245,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                     <span>Favorites</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href={`/profile/${session.user.id}`} className="flex items-center gap-2">
+                    <Link href={profileHref} className="flex items-center gap-2">
                       <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
                       <span>My Profile</span>
                     </Link>
@@ -224,6 +263,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
       </Sidebar>
       {children || <Dashboard />}
     </div>
+    </>
   );
 }
 

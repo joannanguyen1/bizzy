@@ -1,4 +1,4 @@
-import { neon, neonConfig } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 import * as authSchema from "@/schema/auth-schema";
 import * as placesSchema from "@/schema/places-schema";

@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { user } from "@/schema/auth-schema";
 import { follow } from "@/schema/follow-schema";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -13,7 +13,7 @@ export async function GET(
   try {
     const session = await auth.api.getSession({ headers: req.headers });
     const { userId } = await params;
-    
+
     const userData = await db
       .select()
       .from(user)
@@ -26,18 +26,18 @@ export async function GET(
 
     const userRecord = userData[0];
 
-    const followersResult = await db
-      .select({ count: count() })
-      .from(follow)
-      .where(eq(follow.followingId, userId));
+    const [followersResult, followingResult] = await Promise.all([
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(follow)
+        .where(eq(follow.followingId, userId)),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(follow)
+        .where(eq(follow.followerId, userId)),
+    ]);
 
     const followersCount = followersResult[0]?.count || 0;
-
-    const followingResult = await db
-      .select({ count: count() })
-      .from(follow)
-      .where(eq(follow.followerId, userId));
-
     const followingCount = followingResult[0]?.count || 0;
 
     let isFollowing = false;
@@ -52,7 +52,7 @@ export async function GET(
           )
         )
         .limit(1);
-      
+
       isFollowing = followCheck.length > 0;
     }
 
@@ -60,10 +60,13 @@ export async function GET(
       user: {
         id: userRecord.id,
         name: userRecord.name,
+        username: userRecord.username,
         email: userRecord.email,
         image: userRecord.image,
         createdAt: userRecord.createdAt,
       },
+      onboardingCompleted: userRecord.onboardingCompleted,
+      interests: userRecord.interests,
       followersCount,
       followingCount,
       isFollowing,
@@ -76,4 +79,3 @@ export async function GET(
     );
   }
 }
-
