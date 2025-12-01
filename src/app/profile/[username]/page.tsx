@@ -18,11 +18,12 @@ export default async function ProfilePage({
 
   const { username } = await params;
   const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
+  const headersList = await headers();
 
   const userResponse = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/by-username/${cleanUsername}`,
     {
-      headers: await headers(),
+      headers: headersList,
       cache: 'no-store'
     }
   );
@@ -38,20 +39,20 @@ export default async function ProfilePage({
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}`,
       {
-        headers: await headers(),
+        headers: headersList,
         cache: 'no-store'
       }
     ),
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}/places`,
       {
-        headers: await headers(),
+        headers: headersList,
         cache: 'no-store'
       }
     ),
   ]);
 
-  if (!profileResponse.ok) {
+  if (!profileResponse.ok || !placesResponse.ok) {
     redirect("/map");
   }
 
