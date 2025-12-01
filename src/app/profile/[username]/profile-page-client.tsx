@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon } from "lucide-react";
@@ -57,7 +56,9 @@ function hasValidPlaceId(placeId: string | null): boolean {
 }
 
 interface ProfilePageClientProps {
-  username: string;
+  profileData: ProfileData;
+  places: SavedPlace[];
+  userId: string;
   currentUserId: string;
   session: {
     session: Session;
@@ -66,21 +67,18 @@ interface ProfilePageClientProps {
 }
 
 export default function ProfilePageClient({
-  username,
+  profileData: initialProfileData,
+  places,
+  userId,
   currentUserId,
   session,
 }: ProfilePageClientProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [places, setPlaces] = useState<SavedPlace[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
   const prefetchFollowers = () => {
-    if (!userId) return;
     queryClient.prefetchQuery({
       queryKey: ["followers", userId],
       queryFn: async () => {
@@ -93,7 +91,6 @@ export default function ProfilePageClient({
   };
 
   const prefetchFollowing = () => {
-    if (!userId) return;
     queryClient.prefetchQuery({
       queryKey: ["following", userId],
       queryFn: async () => {
@@ -105,83 +102,25 @@ export default function ProfilePageClient({
     });
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
+  const isOwnProfile = userId === currentUserId;
+  const user = profileData.user;
 
-        const userResponse = await fetch(`/api/users/by-username/${cleanUsername}`);
-        if (!userResponse.ok) {
-          router.push("/map");
-          return;
-        }
-        const userData = await userResponse.json();
-        const fetchedUserId = userData.user.id;
-        setUserId(fetchedUserId);
-
-        const profileResponse = await fetch(`/api/profile/${fetchedUserId}`);
-        if (!profileResponse.ok) {
-          throw new Error("Failed to fetch profile");
-        }
+  const handleFollowChange = async () => {
+    try {
+      const profileResponse = await fetch(`/api/profile/${userId}`);
+      if (profileResponse.ok) {
         const profile = await profileResponse.json();
         setProfileData({
           ...profile,
           user: {
             ...profile.user,
-            username: userData.user.username,
+            username: user.username,
           },
         });
-
-        const placesResponse = await fetch(`/api/profile/${fetchedUserId}/places`);
-        if (!placesResponse.ok) {
-          throw new Error("Failed to fetch places");
-        }
-        const placesData = await placesResponse.json();
-        const fetchedPlaces = placesData.places || [];
-
-        setPlaces(fetchedPlaces);
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    fetchData();
-  }, [username, router]);
-
-  if (isLoading || !profileData || !userId) {
-    return (
-      <LoggedInLayout session={session}>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-muted-foreground">Loading profile...</div>
-        </div>
-      </LoggedInLayout>
-    );
-  }
-
-  const isOwnProfile = userId === currentUserId;
-  const user = profileData.user;
-
-  const handleFollowChange = () => {
-    const fetchProfileData = async () => {
-      try {
-        const profileResponse = await fetch(`/api/profile/${userId}`);
-        if (profileResponse.ok) {
-          const profile = await profileResponse.json();
-          setProfileData({
-            ...profile,
-            user: {
-              ...profile.user,
-              username: user.username,
-            },
-          });
-        }
-      } catch (error) {
-        console.error("Error refreshing profile data:", error);
-      }
-    };
-    fetchProfileData();
+    } catch (error) {
+      console.error("Error refreshing profile data:", error);
+    }
   };
 
   return (
