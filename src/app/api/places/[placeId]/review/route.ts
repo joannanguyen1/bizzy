@@ -1,4 +1,3 @@
-// app/api/places/[placeId]/review/route.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
@@ -7,7 +6,6 @@ import { placeReview } from "@/schema/places-schema";
 import { eq, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
-// GET /api/places/:placeId/review -> current user's review for this place
 export async function GET(
   req: NextRequest,
   context: { params: Promise<{ placeId: string }> }
@@ -19,7 +17,6 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ⬇️ unwrap params
     const { placeId } = await context.params;
     const decodedPlaceId = decodeURIComponent(placeId);
 
@@ -35,7 +32,6 @@ export async function GET(
       .limit(1);
 
     if (!review) {
-      // no review yet
       return NextResponse.json(null, { status: 200 });
     }
 
@@ -57,7 +53,6 @@ export async function GET(
   }
 }
 
-// POST /api/places/:placeId/review -> create or update current user's review
 export async function POST(
   req: NextRequest,
   context: { params: Promise<{ placeId: string }> }
@@ -69,7 +64,6 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ⬇️ unwrap params
     const { placeId } = await context.params;
     const decodedPlaceId = decodeURIComponent(placeId);
 

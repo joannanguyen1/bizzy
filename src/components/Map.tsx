@@ -132,7 +132,6 @@ export default function Map({ placeId = undefined }: MapProps) {
     );
   };
 
-  // Handle map clicks to add pins
   const handleMapClick = async (event: google.maps.MapMouseEvent) => {
     if (!event.latLng || !mapInstanceRef.current || !window.google?.maps) return;
 
@@ -276,7 +275,6 @@ export default function Map({ placeId = undefined }: MapProps) {
     );
   };
 
-  // init map + load place or user location
   useEffect(() => {
     setIsPlaceSaved(false);
     setSelectedPlace(null);
@@ -344,7 +342,6 @@ export default function Map({ placeId = undefined }: MapProps) {
     };
   }, [placeId]);
 
-  // 🔁 Load existing review for this user + place whenever placeId changes
   useEffect(() => {
     const fetchUserNotes = async () => {
       if (!selectedPlace?.placeId) {
@@ -358,7 +355,6 @@ export default function Map({ placeId = undefined }: MapProps) {
         );
         if (response.ok) {
           const data = await response.json();
-          // data is either null (no review) or { rating, review, ... }
           if (data) {
             setUserNotes({ rating: data.rating, review: data.review });
           } else {
@@ -409,7 +405,6 @@ export default function Map({ placeId = undefined }: MapProps) {
     }
   };
 
-  // ✅ Return boolean so we know if we should open the review popup
   const handleAddPlace = async (): Promise<boolean> => {
     if (!selectedPlace) return false;
 
@@ -432,7 +427,6 @@ export default function Map({ placeId = undefined }: MapProps) {
         const error = await response.json().catch(() => null);
 
         if (response.status === 409) {
-          // Already saved – still allow reviewing
           setIsPlaceSaved(true);
           toast.info("Place is already saved");
           return true;
