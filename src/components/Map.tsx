@@ -50,10 +50,17 @@ export default function Map({ placeId = undefined }: MapProps) {
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
   const clickMarkerRef = useRef<google.maps.Marker | null>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
+
   const [selectedPlace, setSelectedPlace] = useState<SelectedPlace | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isPlaceSaved, setIsPlaceSaved] = useState(false);
   const [isCheckingSaved, setIsCheckingSaved] = useState(false);
+
+  const [isReviewPopupOpen, setIsReviewPopupOpen] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
+  const [review, setReview] = useState("");
+  const [userNotes, setUserNotes] = useState<{ rating: number; review: string } | null>(null);
+
   const locationAttemptedRef = useRef(false);
 
   const checkIfPlaceIsSaved = async (placeIdToCheck: string) => {
@@ -65,7 +72,9 @@ export default function Map({ placeId = undefined }: MapProps) {
         return;
       }
 
-      const response = await fetch(`/api/places/check?placeId=${encodeURIComponent(placeIdToCheck)}`);
+      const response = await fetch(
+        `/api/places/check?placeId=${encodeURIComponent(placeIdToCheck)}`
+      );
       if (response.ok) {
         const data = await response.json();
         setIsPlaceSaved(data.isSaved);
@@ -112,7 +121,7 @@ export default function Map({ placeId = undefined }: MapProps) {
           toast.success("Location found!");
         }
       },
-      (error) => {
+      () => {
         console.log("Location access denied or unavailable");
       },
       {
@@ -129,13 +138,11 @@ export default function Map({ placeId = undefined }: MapProps) {
 
     const maps = window.google.maps;
     const clickedLocation = event.latLng;
-    
-    // Remove previous click marker
+
     if (clickMarkerRef.current) {
       clickMarkerRef.current.setMap(null);
     }
 
-    // Add new marker at clicked location
     clickMarkerRef.current = new maps.Marker({
       position: clickedLocation,
       map: mapInstanceRef.current,
@@ -150,9 +157,8 @@ export default function Map({ placeId = undefined }: MapProps) {
       },
     });
 
-    // Use Geocoding API to get address information
     const geocoder = new maps.Geocoder();
-    
+
     try {
       const results = await new Promise<google.maps.GeocoderResult[]>((resolve, reject) => {
         geocoder.geocode(
@@ -169,48 +175,53 @@ export default function Map({ placeId = undefined }: MapProps) {
 
       if (results && results.length > 0) {
         const result = results[0];
-        
-        // Create a place object from the clicked location
+
         const clickedPlace: SelectedPlace = {
-          name: result.formatted_address?.split(',')[0] || "Selected Location",
-          formattedAddress: result.formatted_address || `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+          name: result.formatted_address?.split(",")[0] || "Selected Location",
+          formattedAddress:
+            result.formatted_address ||
+            `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
           latitude: clickedLocation.lat(),
           longitude: clickedLocation.lng(),
-          placeId: result.place_id, // This will be undefined for some locations, but that's OK
+          placeId: result.place_id,
         };
 
         setSelectedPlace(clickedPlace);
-        setIsPlaceSaved(false); // Reset saved status for new location
-        
-        // If we have a place_id, check if it's already saved
+        setIsPlaceSaved(false);
+        setUserNotes(null);
+
         if (result.place_id) {
           checkIfPlaceIsSaved(result.place_id);
         }
       } else {
-        // Fallback if geocoding doesn't return results
         const fallbackPlace: SelectedPlace = {
           name: "Selected Location",
-          formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+          formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(
+            6
+          )}`,
           latitude: clickedLocation.lat(),
           longitude: clickedLocation.lng(),
         };
-        
+
         setSelectedPlace(fallbackPlace);
         setIsPlaceSaved(false);
+        setUserNotes(null);
       }
     } catch (error) {
       console.error("Geocoding error:", error);
-      
-      // Fallback place when geocoding fails
+
       const fallbackPlace: SelectedPlace = {
         name: "Selected Location",
-        formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(6)}`,
+        formattedAddress: `${clickedLocation.lat().toFixed(6)}, ${clickedLocation.lng().toFixed(
+          6
+        )}`,
         latitude: clickedLocation.lat(),
         longitude: clickedLocation.lng(),
       };
-      
+
       setSelectedPlace(fallbackPlace);
       setIsPlaceSaved(false);
+      setUserNotes(null);
     }
   };
 
@@ -226,7 +237,7 @@ export default function Map({ placeId = undefined }: MapProps) {
 
     service.getDetails(
       {
-        placeId: placeId,
+        placeId,
         fields: ["geometry", "name", "formatted_address", "place_id"],
       },
       (place: GoogleMapsPlaceResult | null, status: string) => {
@@ -255,6 +266,7 @@ export default function Map({ placeId = undefined }: MapProps) {
           };
 
           setSelectedPlace(loadedPlace);
+          setUserNotes(null);
 
           if (place.place_id) {
             checkIfPlaceIsSaved(place.place_id);
@@ -264,9 +276,11 @@ export default function Map({ placeId = undefined }: MapProps) {
     );
   };
 
+  // init map + load place or user location
   useEffect(() => {
     setIsPlaceSaved(false);
     setSelectedPlace(null);
+    setUserNotes(null);
     locationAttemptedRef.current = false;
 
     if (placeId) {
@@ -279,7 +293,7 @@ export default function Map({ placeId = undefined }: MapProps) {
       const maps = window.google.maps;
       const phillyCenter: google.maps.LatLngLiteral = { lat: 39.9526, lng: -75.1652 };
       const phillyBounds = new maps.LatLngBounds(
-        { lat: 39.86, lng: -75.30 },
+        { lat: 39.86, lng: -75.3 },
         { lat: 40.14, lng: -74.95 }
       );
 
@@ -294,11 +308,9 @@ export default function Map({ placeId = undefined }: MapProps) {
       });
 
       mapInstanceRef.current = map;
-
-      // Add click listener to the map
       map.addListener("click", handleMapClick);
 
-      maps.event.addListenerOnce(map, 'tilesloaded', () => {
+      maps.event.addListenerOnce(map, "tilesloaded", () => {
         if (placeId) {
           loadPlaceById(placeId, map);
         } else {
@@ -332,8 +344,74 @@ export default function Map({ placeId = undefined }: MapProps) {
     };
   }, [placeId]);
 
-  const handleAddPlace = async () => {
-    if (!selectedPlace) return;
+  // 🔁 Load existing review for this user + place whenever placeId changes
+  useEffect(() => {
+    const fetchUserNotes = async () => {
+      if (!selectedPlace?.placeId) {
+        setUserNotes(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/places/${encodeURIComponent(selectedPlace.placeId)}/review`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // data is either null (no review) or { rating, review, ... }
+          if (data) {
+            setUserNotes({ rating: data.rating, review: data.review });
+          } else {
+            setUserNotes(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user notes:", error);
+      }
+    };
+
+    fetchUserNotes();
+  }, [selectedPlace?.placeId]);
+
+  const handleSubmitReview = async () => {
+    if (!selectedPlace?.placeId) {
+      toast.error("Missing place ID for review.");
+      return;
+    }
+    if (!rating || !review.trim()) {
+      toast.error("Please provide a rating and review.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/places/${encodeURIComponent(selectedPlace.placeId)}/review`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating, review }),
+        }
+      );
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.error || "Failed to save review");
+      }
+
+      setUserNotes({ rating, review });
+      toast.success("Review submitted successfully!");
+      setIsReviewPopupOpen(false);
+      setRating(null);
+      setReview("");
+    } catch (error) {
+      console.error("Error saving review:", error);
+      toast.error("Failed to save review.");
+    }
+  };
+
+  // ✅ Return boolean so we know if we should open the review popup
+  const handleAddPlace = async (): Promise<boolean> => {
+    if (!selectedPlace) return false;
 
     setIsSaving(true);
     try {
@@ -341,34 +419,44 @@ export default function Map({ placeId = undefined }: MapProps) {
 
       if (!session?.data?.user) {
         toast.error("You must be logged in to save places");
-        return;
+        return false;
       }
 
       const response = await fetch("/api/places", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(selectedPlace),
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => null);
+
         if (response.status === 409) {
+          // Already saved – still allow reviewing
           setIsPlaceSaved(true);
           toast.info("Place is already saved");
-          return;
+          return true;
         }
-        throw new Error(error.error || "Failed to save place");
+
+        throw new Error(error?.error || "Failed to save place");
       }
 
       toast.success("Place saved successfully!");
       setIsPlaceSaved(true);
+      return true;
     } catch (error) {
       console.error("Error saving place:", error);
       toast.error(error instanceof Error ? error.message : "Failed to save place");
+      return false;
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddPlaceWithReview = async () => {
+    const ok = await handleAddPlace();
+    if (ok) {
+      setIsReviewPopupOpen(true);
     }
   };
 
@@ -385,7 +473,7 @@ export default function Map({ placeId = undefined }: MapProps) {
             {selectedPlace.formattedAddress}
           </p>
           <button
-            onClick={handleAddPlace}
+            onClick={handleAddPlaceWithReview}
             disabled={isSaving || isPlaceSaved || isCheckingSaved}
             className={`w-full px-4 py-2 font-medium rounded-md transition-colors ${
               isPlaceSaved
@@ -393,8 +481,73 @@ export default function Map({ placeId = undefined }: MapProps) {
                 : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white"
             }`}
           >
-            {isSaving ? "Saving..." : isCheckingSaved ? "Checking..." : isPlaceSaved ? "Saved" : "Add Place"}
+            {isSaving
+              ? "Saving..."
+              : isCheckingSaved
+              ? "Checking..."
+              : isPlaceSaved
+              ? "Saved"
+              : "Add Place"}
           </button>
+
+          {userNotes && (
+            <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+              <h4 className="text-md font-semibold mb-2">Your Notes</h4>
+              <p className="text-sm text-gray-700">Rating: {userNotes.rating}/5</p>
+              <p className="text-sm text-gray-700">Review: {userNotes.review}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isReviewPopupOpen && (
+        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-[500px]">
+            <h2 className="text-lg font-semibold mb-4">Add Your Review</h2>
+
+            <div className="mb-4">
+              <label className="block mb-2">Rating (1–5):</label>
+              <select
+                value={rating ?? ""}
+                onChange={(e) => setRating(Number(e.target.value))}
+                className="border rounded p-2 w-full"
+              >
+                <option value="" disabled>
+                  Select a rating
+                </option>
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <option key={num} value={num}>
+                    {num}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="block mb-2">Your Review:</label>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                className="border rounded p-2 w-full"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setIsReviewPopupOpen(false)}
+                className="mr-2 px-4 py-2 bg-gray-300 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

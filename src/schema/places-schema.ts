@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, doublePrecision, integer } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 export const savedPlace = pgTable("saved_place", {
@@ -18,3 +18,17 @@ export const savedPlace = pgTable("saved_place", {
     .notNull(),
 });
 
+export const placeReview = pgTable("place_review", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  placeId: text("place_id").notNull(),
+  rating: integer("rating").notNull(),
+  review: text("review").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
