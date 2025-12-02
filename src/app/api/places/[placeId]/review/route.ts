@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { placeReview } from "@/schema/places-schema";
 import { eq, and } from "drizzle-orm";
-import { randomUUID } from "crypto";
 
 export async function GET(
   req: NextRequest,
@@ -71,32 +70,32 @@ export async function POST(
     const rating = Number(body.rating);
     const reviewText = String(body.review ?? "").trim();
 
-    if (!Number.isFinite(rating) || rating < 1 || rating > 5 || !reviewText) {
+    if (
+      !Number.isFinite(rating) ||
+      !Number.isInteger(rating) ||
+      rating < 1 ||
+      rating > 5 ||
+      !reviewText
+    ) {
       return NextResponse.json(
-        { error: "Rating (1–5) and non-empty review text are required" },
+        { error: "Rating must be an integer from 1 to 5, and review text cannot be empty" },
         { status: 400 }
       );
     }
 
-    const now = new Date();
-
     await db
       .insert(placeReview)
       .values({
-        id: randomUUID(),
         placeId: decodedPlaceId,
         userId: session.user.id,
         rating,
         review: reviewText,
-        createdAt: now,
-        updatedAt: now,
       })
       .onConflictDoUpdate({
         target: [placeReview.placeId, placeReview.userId],
         set: {
           rating,
           review: reviewText,
-          updatedAt: now,
         },
       });
 
@@ -104,7 +103,6 @@ export async function POST(
       {
         rating,
         review: reviewText,
-        updatedAt: now,
       },
       { status: 200 }
     );

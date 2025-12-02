@@ -61,7 +61,7 @@ export default function Map({ placeId = undefined }: MapProps) {
   const [review, setReview] = useState("");
   const [userNotes, setUserNotes] = useState<{ rating: number; review: string } | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);    
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
 
   const locationAttemptedRef = useRef(false);
 
@@ -351,17 +351,27 @@ export default function Map({ placeId = undefined }: MapProps) {
         return;
       }
 
+      const session = await authClient.getSession();
+      const user = session?.data?.user;
+
+      if (!user) {
+        setUserNotes(null);
+        return;
+      }
+
       try {
         const response = await fetch(
           `/api/places/${encodeURIComponent(selectedPlace.placeId)}/review`
         );
+
+        if (response.status === 401) {
+          setUserNotes(null);
+          return;
+        }
+
         if (response.ok) {
           const data = await response.json();
-          if (data) {
-            setUserNotes({ rating: data.rating, review: data.review });
-          } else {
-            setUserNotes(null);
-          }
+          setUserNotes(data ? { rating: data.rating, review: data.review } : null);
         }
       } catch (error) {
         console.error("Error fetching user notes:", error);
@@ -456,6 +466,17 @@ export default function Map({ placeId = undefined }: MapProps) {
     }
   };
 
+  const handleOpenReviewPopup = () => {
+    if (!selectedPlace?.placeId || !isPlaceSaved) {
+      toast.error("Save this place before adding a review.");
+      return;
+    }
+
+    setRating(userNotes?.rating ?? null);
+    setReview(userNotes?.review ?? "");
+    setIsReviewPopupOpen(true);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
       <div ref={mapRef} className="w-full h-[600px] rounded-lg shadow-lg" />
@@ -485,139 +506,146 @@ export default function Map({ placeId = undefined }: MapProps) {
               ? "Saved"
               : "Add Place"}
           </button>
+
+          {isPlaceSaved && (
+            <button
+              type="button"
+              onClick={handleOpenReviewPopup}
+              className="mt-3 w-full px-4 py-2 text-sm font-semibold rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50"
+            >
+              {userNotes ? "Edit Your Review" : "Add a Review"}
+            </button>
+          )}
         </div>
       )}
 
-    {userNotes && (
-      <div className="w-3/4 mt-3">
-        <button
-          type="button"
-          onClick={() => setIsNotesOpen((open) => !open)}
-          className="flex w-full items-center justify-between rounded-lg border 
-                    border-gray-300 bg-white px-4 py-4 text-lg font-semibold 
-                    text-gray-800 hover:bg-gray-50 transition-colors"
-        >
-          <span>Your Notes</span>
-          <span
-            className={`text-black-500 text-xl transition-transform ${
-              isNotesOpen ? "rotate-180" : ""
-            }`}
+      {userNotes && (
+        <div className="w-3/4 mt-3">
+          <button
+            type="button"
+            onClick={() => setIsNotesOpen((open) => !open)}
+            className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-4 text-lg font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
           >
-            ▼
-          </span>
-        </button>
-
-        {isNotesOpen && (
-          <div className="mt-2 rounded-lg border border-orange-200 bg-orange-50 px-5 py-4">
-            <div className="flex items-center gap-2 mb-3">
-              {[1, 2, 3, 4, 5].map((star) => {
-                const isActive = star <= userNotes.rating;
-                return (
-                  <span
-                    key={star}
-                    className={`text-2xl ${
-                      isActive ? "text-orange-500" : "text-orange-200"
-                    }`}
-                  >
-                    ★
-                  </span>
-                );
-              })}
-            </div>
-
-            <p className="text-xl text-orange-900 leading-relaxed">
-              {userNotes.review}
-            </p>
-          </div>
-        )}
-      </div>
-    )}
-
-    {isReviewPopupOpen && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 sm:p-8 border border-orange-200">
-          <h2 className="text-xl font-semibold mb-1 text-gray-900">
-            Add Your Review
-          </h2>
-          <p className="text-sm text-gray-500 mb-5">
-            Share how your experience was at this spot.
-          </p>
-
-          <div className="mb-5">
-            <label className="block mb-2 text-sm font-medium text-gray-800">
-              Rating (1–5)
-            </label>
-
-            <div
-              className="flex items-center gap-2 text-3xl"
-              onMouseLeave={() => setHoverRating(null)}
+            <span>Your Notes</span>
+            <span
+              className={`text-black text-xl transition-transform ${
+                isNotesOpen ? "rotate-180" : ""
+              }`}
             >
-              {[1, 2, 3, 4, 5].map((star) => {
-                const activeValue = hoverRating ?? rating ?? 0;
-                const isActive = star <= activeValue;
+              ▼
+            </span>
+          </button>
 
-                return (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    className="focus:outline-none"
-                    aria-label={`${star} star${star > 1 ? "s" : ""}`}
-                  >
+          {isNotesOpen && (
+            <div className="mt-2 rounded-lg border border-orange-200 bg-orange-50 px-5 py-4">
+              <div className="flex items-center gap-2 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isActive = star <= userNotes.rating;
+                  return (
                     <span
-                      className={`transition-transform ${
-                        isActive
-                          ? "text-orange-400 drop-shadow-sm scale-105"
-                          : "text-gray-300 hover:text-orange-300"
+                      key={star}
+                      className={`text-2xl ${
+                        isActive ? "text-orange-500" : "text-orange-200"
                       }`}
                     >
                       ★
                     </span>
-                  </button>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              <p className="text-xl text-orange-900 leading-relaxed">
+                {userNotes.review}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {isReviewPopupOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 sm:p-8 border border-orange-200">
+            <h2 className="text-xl font-semibold mb-1 text-gray-900">
+              Add Your Review
+            </h2>
+            <p className="text-sm text-gray-500 mb-5">
+              Share how your experience was at this spot.
+            </p>
+
+            <div className="mb-5">
+              <label className="block mb-2 text-sm font-medium text-gray-800">
+                Rating (1–5)
+              </label>
+
+              <div
+                className="flex items-center gap-2 text-3xl"
+                onMouseLeave={() => setHoverRating(null)}
+              >
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const activeValue = hoverRating ?? rating ?? 0;
+                  const isActive = star <= activeValue;
+
+                  return (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      className="focus:outline-none"
+                      aria-label={`${star} star${star > 1 ? "s" : ""}`}
+                    >
+                      <span
+                        className={`transition-transform ${
+                          isActive
+                            ? "text-orange-400 drop-shadow-sm scale-105"
+                            : "text-gray-300 hover:text-orange-300"
+                        }`}
+                      >
+                        ★
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="mt-1 text-xs text-gray-500">
+                {rating
+                  ? `You selected ${rating} / 5.`
+                  : "Click a star to choose your rating."}
+              </p>
             </div>
 
-            <p className="mt-1 text-xs text-gray-500">
-              {rating
-                ? `You selected ${rating} / 5.`
-                : "Click a star to choose your rating."}
-            </p>
-          </div>
+            <div className="mb-6">
+              <label className="block mb-2 text-sm font-medium text-gray-800">
+                Your Review
+              </label>
+              <textarea
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 text-sm p-3 resize-none"
+                rows={4}
+                placeholder="What did you like or dislike about this place?"
+              />
+            </div>
 
-          <div className="mb-6">
-            <label className="block mb-2 text-sm font-medium text-gray-800">
-              Your Review
-            </label>
-            <textarea
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 text-sm p-3 resize-none"
-              rows={4}
-              placeholder="What did you like or dislike about this place?"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <button
-              onClick={() => setIsReviewPopupOpen(false)}
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmitReview}
-              className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-orange-500 text-white shadow-sm hover:bg-orange-600 disabled:bg-orange-300"
-              disabled={!rating || !review.trim()}
-            >
-              Submit
-            </button>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setIsReviewPopupOpen(false)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                className="px-5 py-2.5 text-sm font-semibold rounded-lg bg-orange-500 text-white shadow-sm hover:bg-orange-600 disabled:bg-orange-300"
+                disabled={!rating || !review.trim()}
+              >
+                Submit
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }
