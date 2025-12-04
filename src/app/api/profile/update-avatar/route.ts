@@ -26,9 +26,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!image.startsWith('data:image/')) {
+    if (
+      !(
+        image.startsWith('data:image/jpeg') ||
+        image.startsWith('data:image/jpg') ||
+        image.startsWith('data:image/png')
+      )
+    ) {
       return NextResponse.json(
-        { error: "Invalid image format" },
+        { error: "Invalid image format. Only JPEG and PNG are allowed." },
         { status: 400 }
       );
     }

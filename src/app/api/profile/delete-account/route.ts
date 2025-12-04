@@ -15,6 +15,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    await auth.api.signOut({ headers: await headers() });
+
     await db
       .delete(user)
       .where(eq(user.id, session.user.id));

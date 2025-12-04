@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { MapPinIcon, CalendarIcon, PencilIcon, CheckIcon, XIcon, ZoomInIcon, ZoomOutIcon, ArrowLeftIcon } from "lucide-react";
@@ -55,6 +54,10 @@ async function getCroppedImg(
   outputWidth: number = pixelCrop.width,
   outputHeight: number = pixelCrop.height
 ): Promise<Blob | null> {
+  if (pixelCrop.x < 0 || pixelCrop.y < 0 || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
+    console.error("Invalid crop dimensions");
+    return null;
+  }
   try {
     const image = await createImage(imageSrc);
     const canvas = document.createElement("canvas");
@@ -154,7 +157,6 @@ export default function ProfilePageClient({
   currentUserId,
   session,
 }: ProfilePageClientProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
@@ -253,8 +255,6 @@ export default function ProfilePageClient({
             },
           });
         }
-
-        router.refresh();
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to update avatar");
@@ -321,7 +321,6 @@ export default function ProfilePageClient({
         setIsEditingName(false);
         setEditedName("");
         setNameError("");
-        router.refresh();
       } else {
         const data = await response.json();
         toast.error(data.error || "Failed to update name");
@@ -688,7 +687,6 @@ export default function ProfilePageClient({
                   aria-hidden="true"
                 />
                 <Slider
-                  defaultValue={[1]}
                   value={[zoom]}
                   min={1}
                   max={4}
