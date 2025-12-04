@@ -14,8 +14,10 @@ export async function blobToBase64(blob: Blob): Promise<string> {
 }
 
 export function validateImageSize(base64: string, maxSizeMB: number = 5): boolean {
-  const base64Length = base64.length - (base64.indexOf(',') + 1);
-  const sizeInBytes = (base64Length * 3) / 4;
+  const base64Data = base64.substring(base64.indexOf(',') + 1);
+  const base64Length = base64Data.length;
+  const padding = base64Data.endsWith('==') ? 2 : base64Data.endsWith('=') ? 1 : 0;
+  const sizeInBytes = (base64Length * 3) / 4 - padding;
   const sizeInMB = sizeInBytes / (1024 * 1024);
   return sizeInMB <= maxSizeMB;
 }
