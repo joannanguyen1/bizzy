@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReviewCard } from "@/components/review-card";
-import { authClient } from "@/lib/auth-client";
 
 interface Review {
   id: string;
@@ -38,45 +37,7 @@ export function ReviewFeed() {
         const response = await fetch("/api/reviews/user");
         if (response.ok) {
           const data = await response.json();
-          const reviewsWithDetails = await Promise.all(
-            (data.reviews || []).map(async (review: Review) => {
-              try {
-                const placeResponse = await fetch(
-                  `/api/place-details?placeId=${encodeURIComponent(review.placeId)}`
-                );
-
-                const placeData = placeResponse.ok ? await placeResponse.json() : null;
-
-                const session = await authClient.getSession();
-                const userResponse = session?.data?.user
-                  ? await fetch(`/api/profile/${review.userId}`)
-                  : null;
-                const userData = userResponse?.ok ? await userResponse.json() : null;
-
-                return {
-                  ...review,
-                  place: placeData?.result
-                    ? {
-                        place_id: placeData.result.place_id,
-                        name: placeData.result.name,
-                      }
-                    : undefined,
-                  user: userData?.user
-                    ? {
-                        id: userData.user.id,
-                        name: userData.user.name,
-                        username: userData.user.username,
-                        image: userData.user.image,
-                      }
-                    : undefined,
-                };
-              } catch (error) {
-                console.error("Error fetching review details:", error);
-                return review;
-              }
-            })
-          );
-          setUserReviews(reviewsWithDetails);
+          setUserReviews(data.reviews || []);
         }
       } catch (error) {
         console.error("Error fetching user reviews:", error);
@@ -90,42 +51,7 @@ export function ReviewFeed() {
         const response = await fetch("/api/reviews/following");
         if (response.ok) {
           const data = await response.json();
-          const reviewsWithDetails = await Promise.all(
-            (data.reviews || []).map(async (review: Review) => {
-              try {
-                const placeResponse = await fetch(
-                  `/api/place-details?placeId=${encodeURIComponent(review.placeId)}`
-                );
-
-                const placeData = placeResponse.ok ? await placeResponse.json() : null;
-
-                const userResponse = await fetch(`/api/profile/${review.userId}`);
-                const userData = userResponse.ok ? await userResponse.json() : null;
-
-                return {
-                  ...review,
-                  place: placeData?.result
-                    ? {
-                        place_id: placeData.result.place_id,
-                        name: placeData.result.name,
-                      }
-                    : undefined,
-                  user: userData?.user
-                    ? {
-                        id: userData.user.id,
-                        name: userData.user.name,
-                        username: userData.user.username,
-                        image: userData.user.image,
-                      }
-                    : undefined,
-                };
-              } catch (error) {
-                console.error("Error fetching review details:", error);
-                return review;
-              }
-            })
-          );
-          setFollowingReviews(reviewsWithDetails);
+          setFollowingReviews(data.reviews || []);
         }
       } catch (error) {
         console.error("Error fetching following reviews:", error);

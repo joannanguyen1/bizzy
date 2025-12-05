@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import BizzyLogo from "@/components/logo";
-import { cn } from "@/lib/utils";
 
 interface PublicLayoutProps {
   children?: React.ReactNode;
