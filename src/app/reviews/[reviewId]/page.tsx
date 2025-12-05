@@ -21,7 +21,6 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
   const { reviewId } = await params;
 
-  // Fetch review data
   const [review] = await db
     .select()
     .from(placeReview)
@@ -32,7 +31,6 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     notFound();
   }
 
-  // Fetch user data
   const [reviewUser] = await db
     .select({
       id: user.id,
@@ -44,7 +42,6 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     .where(eq(user.id, review.userId))
     .limit(1);
 
-  // Fetch like count
   const likeCountResult = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(reviewLike)
@@ -52,7 +49,6 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
   const likeCount = likeCountResult[0]?.count || 0;
 
-  // Check if current user liked the review
   let isLiked = false;
   if (session?.user) {
     const [like] = await db
@@ -68,7 +64,6 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     isLiked = !!like;
   }
 
-  // Fetch place details
   let placeDetails = null;
   if (review.placeId) {
     placeDetails = await fetchPlaceDetails(review.placeId);
