@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Star, Heart, ArrowLeft } from "lucide-react";
@@ -47,69 +46,20 @@ function getInitials(name: string) {
 }
 
 export default function ReviewDetailClient({
-  reviewId,
+  review,
   session,
 }: {
-  reviewId: string;
+  review: Review;
   session: { session: Session; user: User } | null;
 }) {
   const router = useRouter();
-  const [review, setReview] = useState<Review | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [isLiked, setIsLiked] = useState(review.isLiked);
+  const [likeCount, setLikeCount] = useState(review.likeCount);
   const [isToggling, setIsToggling] = useState(false);
-
-  useEffect(() => {
-    const fetchReview = async () => {
-      try {
-        const response = await fetch(`/api/reviews/${reviewId}`);
-        if (response.ok) {
-          const data = await response.json();
-          setReview(data);
-          setIsLiked(data.isLiked || false);
-          setLikeCount(data.likeCount || 0);
-
-          if (data.placeId) {
-            try {
-              const placeResponse = await fetch(
-                `/api/place-details?placeId=${encodeURIComponent(data.placeId)}`
-              );
-              if (placeResponse.ok) {
-                const placeData = await placeResponse.json();
-                if (placeData.result) {
-                  setReview((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          place: {
-                            place_id: placeData.result.place_id,
-                            name: placeData.result.name,
-                            formatted_address: placeData.result.formatted_address,
-                          },
-                        }
-                      : null
-                  );
-                }
-              }
-            } catch (error) {
-              console.error("Error fetching place details:", error);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching review:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReview();
-  }, [reviewId]);
 
   const handleLike = async () => {
     if (!session) {
-      router.push(`/auth/signin?callbackUrl=/reviews/${reviewId}`);
+      router.push(`/auth/signin?callbackUrl=/reviews/${review.id}`);
       return;
     }
 
@@ -123,7 +73,7 @@ export default function ReviewDetailClient({
     setLikeCount((prev) => (previousLiked ? prev - 1 : prev + 1));
 
     try {
-      const response = await fetch(`/api/reviews/${reviewId}/like`, {
+      const response = await fetch(`/api/reviews/${review.id}/like`, {
         method: previousLiked ? "DELETE" : "POST",
       });
 
@@ -149,36 +99,20 @@ export default function ReviewDetailClient({
     });
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Loading review...</p>
-      </div>
-    );
-  }
+  const reviewContent = (
+    <div className="flex flex-1 min-h-0">
+      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full min-h-0 overflow-y-auto">
+        <div className="flex flex-col gap-8 pb-8">
+          <Button
+            variant="ghost"
+            onClick={() => router.back()}
+            className="w-fit"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
 
-  if (!review) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Review not found</p>
-      </div>
-    );
-  }
-
-  const content = (
-    <div className="max-w-4xl mx-auto p-4 md:p-8">
-      <Button
-        variant="ghost"
-        onClick={() => router.back()}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6">
             <div className="flex items-center gap-3">
               {review.user?.image ? (
                 <Avatar className="h-12 w-12">
@@ -224,7 +158,7 @@ export default function ReviewDetailClient({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 ml-auto">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
@@ -237,43 +171,44 @@ export default function ReviewDetailClient({
               ))}
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-base mb-4 whitespace-pre-wrap">{review.review}</p>
-          <div className="flex items-center justify-between pt-4 border-t">
-            <span className="text-sm text-muted-foreground">
-              {formatDate(review.createdAt)}
-            </span>
-            {session && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2"
-                onClick={handleLike}
-                disabled={isToggling}
-              >
-                <Heart
-                  className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
-                />
-                <span>{likeCount}</span>
-              </Button>
-            )}
-            {!session && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Heart className="h-5 w-5" />
-                <span>{likeCount}</span>
-              </div>
-            )}
+
+          <div className="space-y-4">
+            <p className="text-base whitespace-pre-wrap">{review.review}</p>
+            <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700">
+              <span className="text-sm text-muted-foreground">
+                {formatDate(review.createdAt)}
+              </span>
+              {session && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleLike}
+                  disabled={isToggling}
+                >
+                  <Heart
+                    className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+                  />
+                  <span>{likeCount}</span>
+                </Button>
+              )}
+              {!session && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Heart className="h-5 w-5" />
+                  <span>{likeCount}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 
   if (session) {
-    return <LoggedInLayout session={session}>{content}</LoggedInLayout>;
+    return <LoggedInLayout session={session}>{reviewContent}</LoggedInLayout>;
   }
 
-  return <PublicLayout>{content}</PublicLayout>;
+  return <PublicLayout>{reviewContent}</PublicLayout>;
 }
 

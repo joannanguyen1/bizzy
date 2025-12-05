@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Star, Heart } from "lucide-react";
-import Link from "next/link";
 import BoringAvatar from "boring-avatars";
 import { authClient } from "@/lib/auth-client";
+import nprogress from "nprogress";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -43,6 +44,7 @@ function getInitials(name: string) {
 }
 
 export function ReviewCard({ review }: { review: Review }) {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(review.isLiked || false);
   const [likeCount, setLikeCount] = useState(review.likeCount || 0);
   const [isToggling, setIsToggling] = useState(false);
@@ -89,8 +91,28 @@ export function ReviewCard({ review }: { review: Review }) {
     });
   };
 
+  const handleCardClick = () => {
+    nprogress.start();
+    router.push(`/reviews/${review.id}`);
+  };
+
+  const handleUserClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    nprogress.start();
+    router.push(`/profile/${review.user?.username ? `@${review.user.username}` : review.userId}`);
+  };
+
+  const handlePlaceClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    nprogress.start();
+    router.push(`/map/places/${encodeURIComponent(review.place!.place_id)}`);
+  };
+
   return (
-    <Card>
+    <Card
+      className="hover:shadow-md transition-shadow cursor-pointer"
+      onClick={handleCardClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -111,20 +133,20 @@ export function ReviewCard({ review }: { review: Review }) {
               </div>
             )}
             <div>
-              <Link
-                href={`/profile/${review.user?.username ? `@${review.user.username}` : review.userId}`}
-                className="font-semibold hover:underline"
+              <button
+                onClick={handleUserClick}
+                className="font-semibold hover:underline text-left"
               >
                 {review.user?.name || "User"}
-              </Link>
+              </button>
               {review.place && (
                 <div>
-                  <Link
-                    href={`/map/places/${encodeURIComponent(review.place.place_id)}`}
-                    className="text-sm text-muted-foreground hover:underline"
+                  <button
+                    onClick={handlePlaceClick}
+                    className="text-sm text-muted-foreground hover:underline text-left"
                   >
                     {review.place.name}
-                  </Link>
+                  </button>
                 </div>
               )}
             </div>
@@ -152,7 +174,10 @@ export function ReviewCard({ review }: { review: Review }) {
               variant="ghost"
               size="sm"
               className="h-8 gap-1"
-              onClick={handleLike}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLike();
+              }}
               disabled={isToggling}
             >
               <Heart
@@ -160,12 +185,6 @@ export function ReviewCard({ review }: { review: Review }) {
               />
               <span>{likeCount}</span>
             </Button>
-            <Link
-              href={`/reviews/${review.id}`}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              View
-            </Link>
           </div>
         </div>
       </CardContent>
