@@ -16,12 +16,21 @@ import { CircleUserRoundIcon } from "lucide-react";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
+interface UserItem {
+  id: string;
+  name: string;
+  username: string | null;
+  image: string | null;
+  createdAt: string;
+}
+
 interface FollowersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId: string;
   currentUserId: string;
   type: "followers" | "following";
+  initialData?: UserItem[];
 }
 
 function getInitials(name: string) {
@@ -40,13 +49,14 @@ export function FollowersDialog({
   userId,
   currentUserId,
   type,
+  initialData,
 }: FollowersDialogProps) {
   const followersQuery = useFollowers(userId);
   const followingQuery = useFollowing(userId);
 
   const query = type === "followers" ? followersQuery : followingQuery;
-  const users = query.data || [];
-  const isLoading = query.isLoading && !query.data;
+  const users = initialData || query.data || [];
+  const isLoading = !initialData && query.isLoading && !query.data;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

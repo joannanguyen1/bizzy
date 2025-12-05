@@ -49,3 +49,25 @@ export const placeReview = pgTable(
     ),
   }),
 );
+
+export const reviewLike = pgTable(
+  "review_like",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => globalThis.crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    reviewId: text("review_id")
+      .notNull()
+      .references(() => placeReview.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => ({
+    userReviewUnique: uniqueIndex("review_like_user_review_unique").on(
+      table.userId,
+      table.reviewId
+    ),
+  })
+);

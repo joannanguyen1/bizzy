@@ -28,6 +28,9 @@ import BoringAvatar from "boring-avatars";
 import { Session, User } from "better-auth/types";
 import PlacesSearchCommand from "@/components/places-search-command";
 import { OnboardingDialog } from "@/components/onboarding-dialog";
+import { PlaceRecommendationsCarousel } from "@/components/place-recommendations-carousel";
+import { UsersToFollowCarousel } from "@/components/users-to-follow-carousel";
+import { ReviewFeed } from "@/components/review-feed";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -85,6 +88,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [interests, setInterests] = useState<string[]>([]);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
@@ -97,6 +101,14 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
           }
           if (userData.user?.username) {
             setUsername(userData.user.username);
+          }
+          if (userData.interests) {
+            try {
+              const parsedInterests = JSON.parse(userData.interests);
+              setInterests(Array.isArray(parsedInterests) ? parsedInterests : []);
+            } catch {
+              setInterests([]);
+            }
           }
         }
       } catch (error) {
@@ -261,7 +273,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
           </div>
         </SidebarBody>
       </Sidebar>
-      {children || <Dashboard />}
+      {children || <Dashboard interests={interests} />}
     </div>
     </>
   );
@@ -299,17 +311,21 @@ export const Logo = React.memo(({ open }: { open: boolean }) => {
 
 Logo.displayName = "Logo";
 
-const Dashboard = () => {
+const Dashboard = ({ interests }: { interests: string[] }) => {
   return (
     <div className="flex flex-1">
-      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-2 flex-1 w-full h-full">
+      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full h-full overflow-y-auto">
         <div className="flex items-center justify-start p-4 border-b border-neutral-200 dark:border-neutral-700">
           <PlacesSearchCommand />
         </div>
-        <div className="flex items-center justify-center h-full">
-          <h1 className="text-4xl font-light text-neutral-800 dark:text-neutral-200">
-            logged in
-          </h1>
+        <div className="flex flex-col gap-8 pb-8">
+          {interests.length > 0 && (
+            <>
+              <PlaceRecommendationsCarousel interests={interests} />
+              <UsersToFollowCarousel interests={interests} />
+            </>
+          )}
+          <ReviewFeed />
         </div>
       </div>
     </div>

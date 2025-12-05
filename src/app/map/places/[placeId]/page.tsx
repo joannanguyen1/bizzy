@@ -14,10 +14,6 @@ export default async function MapPlacePage({ params }: MapPlacePageProps) {
     headers: await headers()
   });
 
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
   const { placeId } = await params;
 
   return <MapPlaceClient session={session} placeId={decodeURIComponent(placeId)} />;

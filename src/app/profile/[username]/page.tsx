@@ -35,7 +35,7 @@ export default async function ProfilePage({
   const userData = await userResponse.json();
   const fetchedUserId = userData.user.id;
 
-  const [profileResponse, placesResponse] = await Promise.all([
+  const [profileResponse, placesResponse, followersResponse, followingResponse] = await Promise.all([
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}`,
       {
@@ -50,6 +50,20 @@ export default async function ProfilePage({
         cache: 'no-store'
       }
     ),
+    fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/${fetchedUserId}/followers`,
+      {
+        headers: headersList,
+        cache: 'no-store'
+      }
+    ),
+    fetch(
+      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/${fetchedUserId}/following`,
+      {
+        headers: headersList,
+        cache: 'no-store'
+      }
+    ),
   ]);
 
   if (!profileResponse.ok || !placesResponse.ok) {
@@ -58,6 +72,9 @@ export default async function ProfilePage({
 
   const profile = await profileResponse.json();
   const placesData = await placesResponse.json();
+
+  const followersData = followersResponse.ok ? await followersResponse.json() : { followers: [] };
+  const followingData = followingResponse.ok ? await followingResponse.json() : { following: [] };
 
   const profileData = {
     ...profile,
@@ -74,6 +91,8 @@ export default async function ProfilePage({
       userId={fetchedUserId}
       currentUserId={session.user.id}
       session={session}
+      initialFollowers={followersData.followers || []}
+      initialFollowing={followingData.following || []}
     />
   );
 }

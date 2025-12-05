@@ -139,6 +139,14 @@ function hasValidPlaceId(placeId: string | null): boolean {
   return Boolean(placeId && typeof placeId === 'string' && placeId.trim().length > 0);
 }
 
+interface UserItem {
+  id: string;
+  name: string;
+  username: string | null;
+  image: string | null;
+  createdAt: string;
+}
+
 interface ProfilePageClientProps {
   profileData: ProfileData;
   places: SavedPlace[];
@@ -148,6 +156,8 @@ interface ProfilePageClientProps {
     session: Session;
     user: User;
   };
+  initialFollowers?: UserItem[];
+  initialFollowing?: UserItem[];
 }
 
 export default function ProfilePageClient({
@@ -156,6 +166,8 @@ export default function ProfilePageClient({
   userId,
   currentUserId,
   session,
+  initialFollowers = [],
+  initialFollowing = [],
 }: ProfilePageClientProps) {
   const queryClient = useQueryClient();
   const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
@@ -524,7 +536,7 @@ export default function ProfilePageClient({
                     </span>
                     <span className="text-muted-foreground">Following</span>
                   </button>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col items-center">
                     <span className="font-semibold text-foreground">
                       {places.length}
                     </span>
@@ -618,6 +630,7 @@ export default function ProfilePageClient({
             userId={userId}
             currentUserId={currentUserId}
             type="followers"
+            initialData={initialFollowers}
           />
 
           <FollowersDialog
@@ -626,6 +639,7 @@ export default function ProfilePageClient({
             userId={userId}
             currentUserId={currentUserId}
             type="following"
+            initialData={initialFollowing}
           />
         </>
       )}
