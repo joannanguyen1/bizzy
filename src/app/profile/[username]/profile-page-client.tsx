@@ -4,8 +4,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
+import { PublicLayout } from "@/components/public-layout";
 import { MapPinIcon, CalendarIcon, PencilIcon, CheckIcon, XIcon, ZoomInIcon, ZoomOutIcon, ArrowLeftIcon } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/follow-button";
 import { FollowersDialog } from "@/components/followers-dialog";
@@ -151,11 +152,11 @@ interface ProfilePageClientProps {
   profileData: ProfileData;
   places: SavedPlace[];
   userId: string;
-  currentUserId: string;
+  currentUserId: string | null;
   session: {
     session: Session;
     user: User;
-  };
+  } | null;
   initialFollowers?: UserItem[];
   initialFollowing?: UserItem[];
 }
@@ -390,49 +391,19 @@ export default function ProfilePageClient({
     }
   };
 
-  return (
-    <LoggedInLayout session={session}>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="shrink-0 relative">
-                {isOwnProfile ? (
-                  <>
-                    <button
-                      onClick={openFileDialog}
-                      className="relative group cursor-pointer"
-                      aria-label="Change avatar"
-                    >
-                      {user.image ? (
-                        <Avatar className="h-24 w-24">
-                          <AvatarImage src={user.image} alt={user.name} />
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className="rounded-full overflow-hidden">
-                          <BoringAvatar
-                            name={user.name}
-                            variant="marble"
-                            colors={AVATAR_COLORS}
-                            size={96}
-                            square={false}
-                          />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <PencilIcon className="h-6 w-6 text-white" />
-                      </div>
-                    </button>
-                    <input
-                      {...getInputProps()}
-                      className="sr-only"
-                      aria-label="Upload avatar image"
-                      tabIndex={-1}
-                    />
-                  </>
-                ) : (
-                  <>
+  const profileContent = (
+    <div className="flex flex-1 min-h-0">
+      <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full min-h-0 overflow-y-auto">
+        <div className="flex flex-col gap-8 pb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6 border-b border-neutral-200 dark:border-neutral-700">
+            <div className="shrink-0 relative">
+              {isOwnProfile ? (
+                <>
+                  <button
+                    onClick={openFileDialog}
+                    className="relative group cursor-pointer"
+                    aria-label="Change avatar"
+                  >
                     {user.image ? (
                       <Avatar className="h-24 w-24">
                         <AvatarImage src={user.image} alt={user.name} />
@@ -449,180 +420,243 @@ export default function ProfilePageClient({
                         />
                       </div>
                     )}
-                  </>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    {isOwnProfile && isEditingName ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editedName}
-                          onChange={(e) => setEditedName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleSaveName();
-                            } else if (e.key === "Escape") {
-                              handleCancelEditName();
-                            }
-                          }}
-                          className={cn("text-2xl font-bold h-auto py-1", nameError && "border-red-500")}
-                          maxLength={31}
-                          autoFocus
-                        />
+                    <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <PencilIcon className="h-6 w-6 text-white" />
+                    </div>
+                  </button>
+                  <input
+                    {...getInputProps()}
+                    className="sr-only"
+                    aria-label="Upload avatar image"
+                    tabIndex={-1}
+                  />
+                </>
+              ) : (
+                <>
+                  {user.image ? (
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage src={user.image} alt={user.name} />
+                      <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="rounded-full overflow-hidden">
+                      <BoringAvatar
+                        name={user.name}
+                        variant="marble"
+                        colors={AVATAR_COLORS}
+                        size={96}
+                        square={false}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  {isOwnProfile && isEditingName ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleSaveName();
+                          } else if (e.key === "Escape") {
+                            handleCancelEditName();
+                          }
+                        }}
+                        className={cn("text-2xl font-medium h-auto py-1", nameError && "border-red-500")}
+                        maxLength={31}
+                        autoFocus
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleSaveName}
+                        disabled={isSavingName}
+                      >
+                        <CheckIcon className="size-4 text-green-500" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleCancelEditName}
+                        disabled={isSavingName}
+                      >
+                        <XIcon className="size-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-2xl font-semibold">{user.name}</h1>
+                      {isOwnProfile && (
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={handleSaveName}
-                          disabled={isSavingName}
+                          onClick={handleStartEditName}
+                          className="h-8 w-8"
                         >
-                          <CheckIcon className="h-4 w-4" />
+                          <PencilIcon className="h-4 w-4" />
                         </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={handleCancelEditName}
-                          disabled={isSavingName}
-                        >
-                          <XIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-2xl">{user.name}</CardTitle>
-                        {isOwnProfile && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={handleStartEditName}
-                            className="h-8 w-8"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                    {nameError && (
-                      <p className="text-sm text-red-500 mt-1">{nameError}</p>
-                    )}
-                  </div>
-                  {!isOwnProfile && (
-                    <FollowButton
-                      userId={userId}
-                      onFollowChange={handleFollowChange}
-                    />
+                      )}
+                    </div>
+                  )}
+                  {nameError && (
+                    <p className="text-sm text-red-500 mt-1">{nameError}</p>
                   )}
                 </div>
-                <CardDescription className={cn("mb-4", !user.username && "opacity-0")}>@{user.username}</CardDescription>
-                <div className="flex gap-6 text-sm">
-                  <button
-                    onClick={() => setFollowersDialogOpen(true)}
-                    onMouseEnter={prefetchFollowers}
-                    className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
-                  >
-                    <span className="font-semibold text-foreground">
-                      {profileData.followersCount}
-                    </span>
-                    <span className="text-muted-foreground">Followers</span>
-                  </button>
-                  <button
-                    onClick={() => setFollowingDialogOpen(true)}
-                    onMouseEnter={prefetchFollowing}
-                    className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
-                  >
-                    <span className="font-semibold text-foreground">
-                      {profileData.followingCount}
-                    </span>
-                    <span className="text-muted-foreground">Following</span>
-                  </button>
-                  <div className="flex flex-col items-center">
-                    <span className="font-semibold text-foreground">
-                      {places.length}
-                    </span>
-                    <span className="text-muted-foreground">Places</span>
-                  </div>
+                {!isOwnProfile && session && (
+                  <FollowButton
+                    userId={userId}
+                    onFollowChange={handleFollowChange}
+                  />
+                )}
+              </div>
+              {user.username && (
+                <p className="text-muted-foreground mb-4">@{user.username}</p>
+              )}
+              <div className="flex gap-6 text-sm">
+                {session ? (
+                  <>
+                    <button
+                      onClick={() => setFollowersDialogOpen(true)}
+                      onMouseEnter={prefetchFollowers}
+                      className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
+                    >
+                      <span className="font-semibold text-foreground">
+                        {profileData.followersCount}
+                      </span>
+                      <span className="text-muted-foreground">Followers</span>
+                    </button>
+                    <button
+                      onClick={() => setFollowingDialogOpen(true)}
+                      onMouseEnter={prefetchFollowing}
+                      className="flex flex-col hover:opacity-70 transition-opacity cursor-pointer"
+                    >
+                      <span className="font-semibold text-foreground">
+                        {profileData.followingCount}
+                      </span>
+                      <span className="text-muted-foreground">Following</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold text-foreground">
+                        {profileData.followersCount}
+                      </span>
+                      <span className="text-muted-foreground">Followers</span>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="font-semibold text-foreground">
+                        {profileData.followingCount}
+                      </span>
+                      <span className="text-muted-foreground">Following</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex flex-col items-center">
+                  <span className="font-semibold text-foreground">
+                    {places.length}
+                  </span>
+                  <span className="text-muted-foreground">Places</span>
                 </div>
               </div>
             </div>
-          </CardHeader>
-        </Card>
+          </div>
 
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold mb-4">
-            {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
-          </h2>
-          {places.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">
+              {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
+            </h2>
+            {places.length === 0 ? (
+              <div className="py-12 text-center">
                 <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
                   {isOwnProfile
                     ? "You haven't saved any places yet."
                     : "This user hasn't saved any places yet."}
                 </p>
-              </CardContent>
-            </Card>
-          ) : (
-            places.map((place) => {
-              const hasPlaceId = hasValidPlaceId(place.placeId);
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {places.map((place) => {
+                  const hasPlaceId = hasValidPlaceId(place.placeId);
 
-              const cardContent = (
-                <Card
-                  className={cn(
-                    "hover:shadow-md transition-shadow",
-                    hasPlaceId && "cursor-pointer hover:border-primary"
-                  )}
-                >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg mb-2">{place.name}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mb-2">
-                          <MapPinIcon className="h-4 w-4 shrink-0" />
-                          <span className="truncate">{place.formattedAddress}</span>
-                        </CardDescription>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <CalendarIcon className="h-3 w-3" />
-                          <span>
-                            Saved on{" "}
-                            {new Date(place.createdAt).toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </span>
+                  const cardContent = (
+                    <Card
+                      className={cn(
+                        "hover:shadow-md transition-shadow",
+                        hasPlaceId && "cursor-pointer hover:border-primary"
+                      )}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="text-lg mb-2">{place.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-2 mb-2">
+                              <MapPinIcon className="h-4 w-4 shrink-0" />
+                              <span className="truncate">{place.formattedAddress}</span>
+                            </CardDescription>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <CalendarIcon className="h-3 w-3" />
+                              <span>
+                                Saved on{" "}
+                                {new Date(place.createdAt).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </CardHeader>
+                    </Card>
+                  );
+
+                  if (hasPlaceId) {
+                    const placeIdValue = String(place.placeId).trim();
+                    return (
+                      <Link
+                        key={place.id}
+                        href={`/map/places/${encodeURIComponent(placeIdValue)}`}
+                        className="block w-full no-underline relative z-1 pointer-events-auto"
+                      >
+                        {cardContent}
+                      </Link>
+                    );
+                  }
+
+                  return (
+                    <div key={place.id} className="relative z-1">
+                      {cardContent}
                     </div>
-                  </CardHeader>
-                </Card>
-              );
-
-              if (hasPlaceId) {
-                const placeIdValue = String(place.placeId).trim();
-                return (
-                  <Link
-                    key={place.id}
-                    href={`/map/places/${encodeURIComponent(placeIdValue)}`}
-                    className="block w-full no-underline relative z-1 pointer-events-auto"
-                  >
-                    {cardContent}
-                  </Link>
-                );
-              }
-
-              return (
-                <div key={place.id} className="relative z-1">
-                  {cardContent}
-                </div>
-              );
-            })
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
+    </div>
+  );
 
-      {userId && (
+  return (
+    <>
+      {session ? (
+        <LoggedInLayout session={session}>
+          {profileContent}
+        </LoggedInLayout>
+      ) : (
+        <PublicLayout>
+          {profileContent}
+        </PublicLayout>
+      )}
+
+      {userId && currentUserId && (
         <>
           <FollowersDialog
             open={followersDialogOpen}
@@ -644,7 +678,7 @@ export default function ProfilePageClient({
         </>
       )}
 
-      {isOwnProfile && (
+      {isOwnProfile && session && (
         <Dialog open={cropDialogOpen} onOpenChange={(open) => !open && handleCancelCrop()}>
           <DialogContent className="gap-0 p-0 sm:max-w-140 *:[button]:hidden">
             <DialogDescription className="sr-only">
@@ -718,7 +752,7 @@ export default function ProfilePageClient({
           </DialogContent>
         </Dialog>
       )}
-    </LoggedInLayout>
+    </>
   );
 }
 

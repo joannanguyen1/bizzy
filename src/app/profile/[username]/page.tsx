@@ -12,10 +12,6 @@ export default async function ProfilePage({
     headers: await headers(),
   });
 
-  if (!session) {
-    redirect("/auth/signin");
-  }
-
   const { username } = await params;
   const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
   const headersList = await headers();
@@ -89,7 +85,7 @@ export default async function ProfilePage({
       profileData={profileData}
       places={placesData.places || []}
       userId={fetchedUserId}
-      currentUserId={session.user.id}
+      currentUserId={session?.user?.id || null}
       session={session}
       initialFollowers={followersData.followers || []}
       initialFollowing={followingData.following || []}

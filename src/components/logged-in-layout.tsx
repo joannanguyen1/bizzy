@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon, MapPinIcon } from "lucide-react";
+import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon, MapPinIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -167,20 +167,6 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
         <MapPinIcon className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
       ),
     },
-    {
-      label: "Profile",
-      href: profileHref,
-      icon: (
-        <UserCog className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "/settings",
-      icon: (
-        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 shrink-0" />
-      ),
-    },
   ];
 
   return (
@@ -242,30 +228,20 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  {/** TODO: Correctly route links to the correct pages */}
-                  <DropdownMenuItem>
-                    <BoltIcon size={16} className="opacity-60" aria-hidden="true" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Layers2Icon size={16} className="opacity-60" aria-hidden="true" />
-                    <span>Projects</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <BookOpenIcon size={16} className="opacity-60" aria-hidden="true" />
-                    <span>Documentation</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
                   <DropdownMenuItem>
                     <PinIcon size={16} className="opacity-60" aria-hidden="true" />
-                    <span>Favorites</span>
+                    <span>Your List</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={profileHref} className="flex items-center gap-2">
                       <UserPenIcon size={16} className="opacity-60" aria-hidden="true" />
-                      <span>My Profile</span>
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/settings" className="flex items-center gap-2">
+                      <SettingsIcon size={16} className="opacity-60" aria-hidden="true" />
+                      <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
