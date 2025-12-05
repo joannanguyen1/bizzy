@@ -1,0 +1,1 @@
+CREATE INDEX "review_like_review_id_idx" ON "review_like" USING btree ("review_id");

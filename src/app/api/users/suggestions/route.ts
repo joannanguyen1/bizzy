@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
       .select({
         id: user.id,
         name: user.name,
+        username: user.username,
         image: user.image,
         interests: user.interests,
       })
@@ -54,6 +55,7 @@ export async function GET(request: NextRequest) {
       return {
         id: u.id,
         name: u.name,
+        username: u.username,
         image: u.image,
         sharedInterests: sharedCount,
       }

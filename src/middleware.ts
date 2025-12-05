@@ -4,6 +4,11 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const session = await auth.api.getSession(req);
+  const pathname = req.nextUrl.pathname;
+
+  if (pathname.startsWith("/map/places/") || pathname.startsWith("/profile/")) {
+    return NextResponse.next();
+  }
 
   if (!session) {
     return NextResponse.redirect(new URL("/auth/signin", req.url));
@@ -13,5 +18,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/map", "/dashboard/:path*", "/profile/:path*"],
+  matcher: ["/map/:path*", "/dashboard/:path*"],
 };
