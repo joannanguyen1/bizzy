@@ -33,6 +33,8 @@ export function UsersToFollowCarousel({ interests }: { interests: string[] }) {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
+
       if (interests.length === 0) {
         setLoading(false);
         return;

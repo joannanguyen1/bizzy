@@ -23,6 +23,8 @@ export function PlaceRecommendationsCarousel({ interests }: { interests: string[
 
   useEffect(() => {
     const fetchPlaces = async () => {
+      setLoading(true);
+
       if (interests.length === 0) {
         setLoading(false);
         return;
@@ -51,16 +53,16 @@ export function PlaceRecommendationsCarousel({ interests }: { interests: string[
     fetchPlaces();
   }, [interests, page]);
 
-  if (places.length === 0 && !loading) {
-    return null;
-  }
-
   const getPlacePhoto = (place: Place) => {
     if (place.photos && place.photos.length > 0) {
       return `/api/place-photo?photoReference=${place.photos[0].photo_reference}&maxWidth=400`;
     }
     return null;
   };
+
+  if (places.length === 0 && !loading) {
+    return null;
+  }
 
   return (
     <div className="w-full">

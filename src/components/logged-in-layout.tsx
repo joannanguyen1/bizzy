@@ -31,6 +31,7 @@ import { OnboardingDialog } from "@/components/onboarding-dialog";
 import { PlaceRecommendationsCarousel } from "@/components/place-recommendations-carousel";
 import { UsersToFollowCarousel } from "@/components/users-to-follow-carousel";
 import { ReviewFeed } from "@/components/review-feed";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -89,9 +90,11 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
+  const [interestsLoading, setInterestsLoading] = useState(true);
 
   useEffect(() => {
     const checkOnboardingStatus = async () => {
+      setInterestsLoading(true);
       try {
         const response = await fetch(`/api/profile/${session.user.id}`);
         if (response.ok) {
@@ -109,12 +112,15 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
             } catch {
               setInterests([]);
             }
+          } else {
+            setInterests([]);
           }
         }
       } catch (error) {
         console.error("Error checking onboarding status:", error);
       } finally {
         setOnboardingChecked(true);
+        setInterestsLoading(false);
       }
     };
 
@@ -273,7 +279,7 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
           </div>
         </SidebarBody>
       </Sidebar>
-      {children || <Dashboard interests={interests} />}
+      {children || <Dashboard interests={interests} interestsLoading={interestsLoading} onboardingChecked={onboardingChecked} />}
     </div>
     </>
   );
@@ -311,7 +317,7 @@ export const Logo = React.memo(({ open }: { open: boolean }) => {
 
 Logo.displayName = "Logo";
 
-const Dashboard = ({ interests }: { interests: string[] }) => {
+const Dashboard = ({ interests, interestsLoading, onboardingChecked }: { interests: string[]; interestsLoading: boolean; onboardingChecked: boolean }) => {
   return (
     <div className="flex flex-1">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full h-full overflow-y-auto">
@@ -319,12 +325,60 @@ const Dashboard = ({ interests }: { interests: string[] }) => {
           <PlacesSearchCommand />
         </div>
         <div className="flex flex-col gap-8 pb-8">
-          {interests.length > 0 && (
+          {interestsLoading || (interests.length === 0 && !onboardingChecked) ? (
+            <>
+              <div className="w-full">
+                <h2 className="text-xl font-semibold mb-4">Place Recommendations</h2>
+                <div className="relative">
+                  <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2 -mx-2 px-2">
+                    <div className="flex gap-4 min-w-max">
+                      {[...Array(3)].map((_, index) => (
+                        <div key={`skeleton-place-${index}`} className="shrink-0 w-full max-w-md">
+                          <Card className="overflow-hidden h-full animate-pulse">
+                            <div className="relative h-48 w-full bg-muted" />
+                            <CardContent className="p-4">
+                              <div className="h-5 bg-muted rounded mb-2" />
+                              <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                              <div className="h-4 bg-muted rounded w-1/2" />
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="w-full">
+                <h2 className="text-xl font-semibold mb-4">Users to Follow</h2>
+                <div className="relative">
+                  <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2 -mx-2 px-2">
+                    <div className="flex gap-4 min-w-max">
+                      {[...Array(3)].map((_, index) => (
+                        <div key={`skeleton-user-${index}`} className="shrink-0 w-full md:max-w-xs">
+                          <Card className="h-full animate-pulse">
+                            <CardContent className="p-4 flex flex-col items-center gap-3">
+                              <div className="h-16 w-16 rounded-full bg-muted" />
+                              <div className="text-center w-full">
+                                <div className="h-4 bg-muted rounded mb-2 mx-auto w-24" />
+                                <div className="h-3 bg-muted rounded mb-1 mx-auto w-20" />
+                                <div className="h-3 bg-muted rounded mx-auto w-32" />
+                              </div>
+                              <div className="h-8 w-20 bg-muted rounded" />
+                            </CardContent>
+                          </Card>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : interests.length > 0 ? (
             <>
               <PlaceRecommendationsCarousel interests={interests} />
               <UsersToFollowCarousel interests={interests} />
             </>
-          )}
+          ) : null}
           <ReviewFeed />
         </div>
       </div>
