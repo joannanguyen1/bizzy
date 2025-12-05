@@ -3,7 +3,6 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { savedPlace } from "@/schema/places-schema";
 import { user } from "@/schema/auth-schema";
-import { follow } from "@/schema/follow-schema";
 import { eq, inArray, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -47,7 +46,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ places: [], hasMore: false });
     }
 
-    const places: any[] = [];
+    const places: Place[] = [];
+
+    interface Place {
+      place_id?: string;
+      id?: string;
+      name: string;
+      formatted_address?: string;
+      source?: string;
+      photos?: Array<{ photo_reference: string }>;
+    }
 
     if (process.env.GOOGLE_MAPS_API_KEY) {
       for (const interest of userInterests.slice(0, 3)) {
@@ -62,7 +70,7 @@ export async function GET(req: NextRequest) {
           if (response.ok) {
             const data = await response.json();
             if (data.results) {
-              places.push(...data.results.map((place: any) => ({
+              places.push(...data.results.map((place: Place) => ({
                 ...place,
                 source: "google",
               })));
