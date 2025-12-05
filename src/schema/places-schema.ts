@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, doublePrecision, integer, uniqueIndex, check } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, doublePrecision, integer, uniqueIndex, index, check } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 import { sql } from "drizzle-orm";
 
@@ -67,6 +67,9 @@ export const reviewLike = pgTable(
   (table) => ({
     userReviewUnique: uniqueIndex("review_like_user_review_unique").on(
       table.userId,
+      table.reviewId
+    ),
+    reviewIdIdx: index("review_like_review_id_idx").on(
       table.reviewId
     ),
   })

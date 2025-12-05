@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
-import { LayoutDashboard, UserCog, Settings, LogOutIcon, ChevronDownIcon, BoltIcon, BookOpenIcon, Layers2Icon, PinIcon, UserPenIcon, MapPinIcon, SettingsIcon } from "lucide-react";
+import { LayoutDashboard, LogOutIcon, ChevronDownIcon, PinIcon, UserPenIcon, MapPinIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";

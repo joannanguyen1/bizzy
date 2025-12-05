@@ -5,6 +5,15 @@ import { savedPlace } from "@/schema/places-schema";
 import { user } from "@/schema/auth-schema";
 import { eq, inArray, sql } from "drizzle-orm";
 
+interface Place {
+  place_id?: string;
+  id?: string;
+  name: string;
+  formatted_address?: string;
+  source?: string;
+  photos?: Array<{ photo_reference: string }>;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession(req);
@@ -47,15 +56,6 @@ export async function GET(req: NextRequest) {
     }
 
     const places: Place[] = [];
-
-    interface Place {
-      place_id?: string;
-      id?: string;
-      name: string;
-      formatted_address?: string;
-      source?: string;
-      photos?: Array<{ photo_reference: string }>;
-    }
 
     if (process.env.GOOGLE_MAPS_API_KEY) {
       for (const interest of userInterests.slice(0, 3)) {
