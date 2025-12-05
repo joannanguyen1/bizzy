@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Star, Heart, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import BoringAvatar from "boring-avatars";
-import { authClient } from "@/lib/auth-client";
 import { Session, User } from "better-auth/types";
 import { PublicLayout } from "@/components/public-layout";
 import { LoggedInLayout } from "@/components/logged-in-layout";
@@ -110,7 +109,7 @@ export default function ReviewDetailClient({
 
   const handleLike = async () => {
     if (!session) {
-      router.push("/auth/signin");
+      router.push(`/auth/signin?callbackUrl=/reviews/${reviewId}`);
       return;
     }
 

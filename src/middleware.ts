@@ -6,7 +6,7 @@ export async function middleware(req: NextRequest) {
   const session = await auth.api.getSession(req);
   const pathname = req.nextUrl.pathname;
 
-  if (pathname.startsWith("/reviews/") || pathname.startsWith("/map/places/")) {
+  if (pathname.startsWith("/map/places/")) {
     return NextResponse.next();
   }
 
@@ -18,5 +18,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/map/:path*", "/dashboard/:path*", "/profile/:path*", "/reviews/:path*"],
+  matcher: ["/map/:path*", "/dashboard/:path*", "/profile/:path*"],
 };

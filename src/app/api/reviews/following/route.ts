@@ -5,34 +5,7 @@ import { placeReview, reviewLike } from "@/schema/places-schema";
 import { follow } from "@/schema/follow-schema";
 import { user } from "@/schema/auth-schema";
 import { eq, desc, inArray, sql, and } from "drizzle-orm";
-
-async function fetchPlaceDetails(placeId: string) {
-  if (!process.env.GOOGLE_MAPS_API_KEY) {
-    return null;
-  }
-
-  try {
-    const fields = ['place_id', 'name', 'formatted_address'].join(',');
-    const apiUrl = new URL("https://maps.googleapis.com/maps/api/place/details/json");
-    apiUrl.searchParams.append("place_id", placeId);
-    apiUrl.searchParams.append("fields", fields);
-    apiUrl.searchParams.append("key", process.env.GOOGLE_MAPS_API_KEY);
-
-    const response = await fetch(apiUrl.toString());
-    const data = await response.json();
-
-    if (data.status === 'OK' && data.result) {
-      return {
-        place_id: data.result.place_id,
-        name: data.result.name,
-        formatted_address: data.result.formatted_address,
-      };
-    }
-  } catch (error) {
-    console.error(`Error fetching place details for ${placeId}:`, error);
-  }
-  return null;
-}
+import { fetchPlaceDetails } from "@/lib/place-utils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -75,6 +48,10 @@ export async function GET(req: NextRequest) {
       .innerJoin(user, eq(placeReview.userId, user.id))
       .where(inArray(placeReview.userId, followingIds))
       .orderBy(desc(placeReview.createdAt));
+
+    if (reviews.length === 0) {
+      return NextResponse.json({ reviews: [] }, { status: 200 });
+    }
 
     const uniquePlaceIds = [...new Set(reviews.map((r) => r.placeId))];
     const placeDetailsMap = new Map<string, { place_id: string; name: string; formatted_address?: string }>();

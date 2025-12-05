@@ -56,7 +56,7 @@ export function UsersToFollowCarousel({ interests }: { interests: string[] }) {
     };
 
     fetchUsers();
-  }, [interests]);
+  }, [JSON.stringify(interests)]);
 
   if (users.length === 0 && !loading) {
     return null;

@@ -51,7 +51,7 @@ export function PlaceRecommendationsCarousel({ interests }: { interests: string[
     };
 
     fetchPlaces();
-  }, [interests, page]);
+  }, [JSON.stringify(interests), page]);
 
   const getPlacePhoto = (place: Place) => {
     if (place.photos && place.photos.length > 0) {
@@ -131,8 +131,12 @@ export function PlaceRecommendationsCarousel({ interests }: { interests: string[
               <div className="shrink-0 w-full max-w-md">
                 <Card className="h-full flex items-center justify-center min-h-[300px]">
                   <button
-                    onClick={() => setPage((p) => p + 1)}
-                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      if (!hasMore || loading) return;
+                      setPage((p) => p + 1);
+                    }}
+                    disabled={loading || !hasMore}
+                    className="text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Load more...
                   </button>
