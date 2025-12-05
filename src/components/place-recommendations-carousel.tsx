@@ -65,11 +65,11 @@ export function PlaceRecommendationsCarousel({ interests }: { interests: string[
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0 max-w-full">
       <h2 className="text-xl font-semibold mb-4">Place Recommendations</h2>
-      <div className="relative">
-        <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2 -mx-2 px-2">
-          <div className="flex gap-4 min-w-max">
+      <div className="relative w-full min-w-0 max-w-full overflow-hidden">
+        <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2">
+          <div className="flex gap-4 min-w-max px-2">
             {loading && places.length === 0 ? (
               <>
                 {[...Array(3)].map((_, index) => (

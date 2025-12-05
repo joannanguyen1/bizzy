@@ -63,15 +63,15 @@ export function UsersToFollowCarousel({ interests }: { interests: string[] }) {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0 max-w-full">
       <h2 className="text-xl font-semibold mb-4">Users to Follow</h2>
-      <div className="relative">
-        <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2 -mx-2 px-2">
-          <div className="flex gap-4 min-w-max">
+      <div className="relative w-full min-w-0 max-w-full overflow-hidden">
+        <div className="overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent pb-2">
+          <div className="flex gap-4 min-w-max px-2">
             {loading && users.length === 0 ? (
               <>
                 {[...Array(3)].map((_, index) => (
-                  <div key={`skeleton-${index}`} className="shrink-0 w-full md:max-w-xs">
+                  <div key={`skeleton-${index}`} className="shrink-0 w-64">
                     <Card className="h-full animate-pulse">
                       <CardContent className="p-4 flex flex-col items-center gap-3">
                         <div className="h-16 w-16 rounded-full bg-muted" />
@@ -88,7 +88,7 @@ export function UsersToFollowCarousel({ interests }: { interests: string[] }) {
               </>
             ) : (
               users.map((user) => (
-              <div key={user.id} className="shrink-0 w-full md:max-w-xs">
+              <div key={user.id} className="shrink-0 w-64">
                 <Card className="h-full">
                   <CardContent className="p-4 flex flex-col items-center gap-3">
                     <Link
