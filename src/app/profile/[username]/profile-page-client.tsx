@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { PublicLayout } from "@/components/public-layout";
-import { MapPinIcon, CalendarIcon, PencilIcon, CheckIcon, XIcon, ZoomInIcon, ZoomOutIcon, ArrowLeftIcon } from "lucide-react";
+import { MapPinIcon, CalendarIcon, PencilIcon, CheckIcon, XIcon, ZoomInIcon, ZoomOutIcon, ArrowLeftIcon, Star } from "lucide-react";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/follow-button";
@@ -124,6 +124,7 @@ interface SavedPlace {
   placeId: string | null;
   createdAt: string;
   updatedAt: string;
+  rating?: number;
 }
 
 function getInitials(name: string) {
@@ -174,6 +175,7 @@ export default function ProfilePageClient({
   const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
+  const [placesWithRatings, setPlacesWithRatings] = useState<SavedPlace[]>(places);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
@@ -391,6 +393,23 @@ export default function ProfilePageClient({
     }
   };
 
+  useEffect(() => {
+    const sortedPlaces = [...places].sort((a, b) => {
+      const ratingA = a.rating ?? null;
+      const ratingB = b.rating ?? null;
+      
+      if (ratingA === null && ratingB === null) {
+        return a.name.localeCompare(b.name);
+      }
+      if (ratingA === null) return 1;
+      if (ratingB === null) return -1;
+      
+      return ratingB - ratingA;
+    });
+    
+    setPlacesWithRatings(sortedPlaces);
+  }, [places]);
+
   const profileContent = (
     <div className="flex flex-1 min-h-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full min-h-0 overflow-y-auto">
@@ -571,7 +590,7 @@ export default function ProfilePageClient({
             <h2 className="text-xl font-semibold">
               {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
             </h2>
-            {places.length === 0 ? (
+            {placesWithRatings.length === 0 ? (
               <div className="py-12 text-center">
                 <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                 <p className="text-muted-foreground">
@@ -581,8 +600,8 @@ export default function ProfilePageClient({
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {places.map((place) => {
+              <div className="space-y-4">
+                {placesWithRatings.map((place) => {
                   const hasPlaceId = hasValidPlaceId(place.placeId);
 
                   const cardContent = (
@@ -593,7 +612,7 @@ export default function ProfilePageClient({
                       )}
                     >
                       <CardHeader>
-                        <div className="flex items-start justify-between">
+                        <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <CardTitle className="text-lg mb-2">{place.name}</CardTitle>
                             <CardDescription className="flex items-center gap-2 mb-2">
@@ -612,6 +631,12 @@ export default function ProfilePageClient({
                               </span>
                             </div>
                           </div>
+                          {place.rating !== undefined && place.rating !== null && (
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                              <span className="font-semibold text-lg">{place.rating.toFixed(1)}</span>
+                            </div>
+                          )}
                         </div>
                       </CardHeader>
                     </Card>

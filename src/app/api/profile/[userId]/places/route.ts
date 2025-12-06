@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { db } from "@/lib/db";
-import { savedPlace } from "@/schema/places-schema";
-import { eq, desc } from "drizzle-orm";
+import { savedPlace, placeReview } from "@/schema/places-schema";
+import { eq, desc, and } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -12,8 +12,26 @@ export async function GET(
     const { userId } = await params;
 
     const places = await db
-      .select()
+      .select({
+        id: savedPlace.id,
+        userId: savedPlace.userId,
+        name: savedPlace.name,
+        formattedAddress: savedPlace.formattedAddress,
+        latitude: savedPlace.latitude,
+        longitude: savedPlace.longitude,
+        placeId: savedPlace.placeId,
+        createdAt: savedPlace.createdAt,
+        updatedAt: savedPlace.updatedAt,
+        rating: placeReview.rating,
+      })
       .from(savedPlace)
+      .leftJoin(
+        placeReview,
+        and(
+          eq(savedPlace.placeId, placeReview.placeId),
+          eq(placeReview.userId, userId)
+        )
+      )
       .where(eq(savedPlace.userId, userId))
       .orderBy(desc(savedPlace.createdAt));
 
