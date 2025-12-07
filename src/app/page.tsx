@@ -131,7 +131,7 @@ export default async function HomePage() {
         <ImagesSection />
         <Footer
           logo={<BizzyLogo width={40} height={40} />}
-          brandName="Bizzy"
+          brandName="bizzy"
           socialLinks={[
             {
               icon: <TwitterIcon className="h-5 w-5" />,
