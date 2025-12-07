@@ -247,7 +247,7 @@ export default function ImagesSection() {
 								<h3 className="text-3xl leading-[38.5px] font-medium tracking-[-0.7px] text-[#263043]">Follow your circle</h3>
 								<p className="leading-[24.75px] text-[#8C929D]">Connect with friends and discoverers. Follow people whose taste you trust and see their latest finds.</p>
 							</div>
-							<div className="bg-neutral-200/50 max-w-sm p-2 -translate-x-5 lg:translate-x-20 mr-12w-fit rounded-xl lg:mr-0 relative drop-shadow-md">
+							<div className="bg-neutral-200/50 max-w-sm p-2 -translate-x-5 lg:translate-x-20 mr-12w-fit rounded-xl lg:mr-0 relative drop-shadow-md mask-l-from-white to-white md:mask-[unset]">
 								<div className="bg-white p-2 rounded-lg">
 									<div className="flex flex-col items-start gap-3">
 										<div className="flex flex-row items-center gap-3 w-full">
