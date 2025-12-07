@@ -92,40 +92,40 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
   const [interests, setInterests] = useState<string[]>([]);
   const [interestsLoading, setInterestsLoading] = useState(true);
 
-  useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      setInterestsLoading(true);
-      try {
-        const response = await fetch(`/api/profile/${session.user.id}`);
-        if (response.ok) {
-          const userData = await response.json();
-          if (!userData.onboardingCompleted) {
-            setShowOnboarding(true);
-          }
-          if (userData.user?.username) {
-            setUsername(userData.user.username);
-          }
-          if (userData.interests) {
-            try {
-              const parsedInterests = JSON.parse(userData.interests);
-              setInterests(Array.isArray(parsedInterests) ? parsedInterests : []);
-            } catch {
-              setInterests([]);
-            }
-          } else {
+  const checkOnboardingStatus = React.useCallback(async () => {
+    setInterestsLoading(true);
+    try {
+      const response = await fetch(`/api/profile/${session.user.id}`);
+      if (response.ok) {
+        const userData = await response.json();
+        if (!userData.onboardingCompleted) {
+          setShowOnboarding(true);
+        }
+        if (userData.user?.username) {
+          setUsername(userData.user.username);
+        }
+        if (userData.interests) {
+          try {
+            const parsedInterests = JSON.parse(userData.interests);
+            setInterests(Array.isArray(parsedInterests) ? parsedInterests : []);
+          } catch {
             setInterests([]);
           }
+        } else {
+          setInterests([]);
         }
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-      } finally {
-        setOnboardingChecked(true);
-        setInterestsLoading(false);
       }
-    };
-
-    checkOnboardingStatus();
+    } catch (error) {
+      console.error("Error checking onboarding status:", error);
+    } finally {
+      setOnboardingChecked(true);
+      setInterestsLoading(false);
+    }
   }, [session.user.id]);
+
+  useEffect(() => {
+    checkOnboardingStatus();
+  }, [checkOnboardingStatus]);
 
   const handleDropdownChange = (isOpen: boolean) => {
     setDropdownOpen(isOpen);
@@ -134,9 +134,9 @@ export function LoggedInLayout({ session, children }: LoggedInLayoutProps) {
     }
   };
 
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
-    router.refresh();
+    await checkOnboardingStatus();
   };
 
   const handleLogout = async () => {
