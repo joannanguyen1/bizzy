@@ -18,10 +18,10 @@
 
 @media (min-width: 1024px) { /* lg */
   .hex-grid {
-    --hex-size: 180px;
+    --hex-size: 195px;
     --hex-height: 210px;
     --hex-row: 85px;
-    --hex-offset: 95px;
+    --hex-offset: 100px;
     --hex-gap: 0.75rem;
   }
 }
