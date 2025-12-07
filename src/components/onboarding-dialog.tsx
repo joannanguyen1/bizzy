@@ -147,6 +147,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set())
+  const confettiIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const [
     { files, isDragging },
@@ -248,6 +249,15 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       }
     }
   }, [finalImageUrl])
+
+  useEffect(() => {
+    return () => {
+      if (confettiIntervalRef.current) {
+        clearInterval(confettiIntervalRef.current)
+        confettiIntervalRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (fileId && fileId !== previousFileIdRef.current) {
@@ -420,11 +430,15 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
           return Math.random() * (max - min) + min
         }
 
-        const interval: NodeJS.Timeout = setInterval(function() {
+        confettiIntervalRef.current = setInterval(function() {
           const timeLeft = animationEnd - Date.now()
 
           if (timeLeft <= 0) {
-            return clearInterval(interval)
+            if (confettiIntervalRef.current) {
+              clearInterval(confettiIntervalRef.current)
+              confettiIntervalRef.current = null
+            }
+            return
           }
 
           const particleCount = 50 * (timeLeft / duration)
@@ -450,8 +464,12 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
         }, 500)
 
         setTimeout(() => {
+          if (confettiIntervalRef.current) {
+            clearInterval(confettiIntervalRef.current)
+            confettiIntervalRef.current = null
+          }
           onComplete()
-        }, 300)
+        }, duration)
       } else {
         console.error("Failed to save onboarding data")
       }

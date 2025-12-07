@@ -428,6 +428,7 @@ function ProfilePageClient({
         setProfileData((prev) => ({
           ...profile,
           user: {
+            ...prev.user,
             ...profile.user,
             username: prev.user.username,
           },

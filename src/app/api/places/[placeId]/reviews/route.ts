@@ -34,7 +34,12 @@ export async function GET(
       .from(placeReview)
       .innerJoin(user, eq(placeReview.userId, user.id))
       .where(eq(placeReview.placeId, decodedPlaceId))
-      .orderBy(desc(placeReview.createdAt));
+      .orderBy(desc(placeReview.createdAt))
+      .limit(50);
+
+    if (reviews.length === 0) {
+      return NextResponse.json({ reviews: [] }, { status: 200 });
+    }
 
     const reviewIds = reviews.map((r) => r.id);
 

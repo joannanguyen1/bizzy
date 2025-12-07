@@ -182,7 +182,7 @@ export default function ImagesSection() {
 								<h3 className="text-3xl leading-[38.5px] font-medium tracking-[-0.7px] text-[#263043]">Build your own space</h3>
 								<p className="leading-[24.75px] text-[#8C929D]">Organize your discoveries with places you want to visit, spots you&apos;ve been to, and recommendations to share with friends.</p>
 							</div>
-							<div className="bg-neutral-200/50 p-2 translate-x-20 mr-12w-fit rounded-xl lg:mr-0 relative drop-shadow-md">
+							<div className="bg-neutral-200/50 p-2 translate-x-20 mr-12 w-fit rounded-xl lg:mr-0 relative drop-shadow-md">
 								<div className="bg-white p-2 rounded-lg">
 									<div className="flex flex-row items-center gap-2 bg-neutral-50 w-fit border rounded-lg p-1 pointer-events-none select-none">
 										<Button className="bg-linear-to-r from-amber-300 to-primary text-white border-primary border drop-shadow-md">
@@ -247,7 +247,7 @@ export default function ImagesSection() {
 								<h3 className="text-3xl leading-[38.5px] font-medium tracking-[-0.7px] text-[#263043]">Follow your circle</h3>
 								<p className="leading-[24.75px] text-[#8C929D]">Connect with friends and discoverers. Follow people whose taste you trust and see their latest finds.</p>
 							</div>
-							<div className="bg-neutral-200/50 max-w-sm p-2 -translate-x-5 lg:translate-x-20 mr-12w-fit rounded-xl lg:mr-0 relative drop-shadow-md mask-l-from-white to-white md:mask-[unset]">
+							<div className="bg-neutral-200/50 max-w-sm p-2 -translate-x-5 lg:translate-x-20 mr-12 w-fit rounded-xl lg:mr-0 relative drop-shadow-md mask-l-from-white to-white md:mask-[unset]">
 								<div className="bg-white p-2 rounded-lg">
 									<div className="flex flex-col items-start gap-3">
 										<div className="flex flex-row items-center gap-3 w-full">
@@ -264,7 +264,7 @@ export default function ImagesSection() {
 													<p className="">@mikej</p>
 													<p>·</p>
 													<div className="flex flex-row items-center gap-1 text-amber-500">
-														<SparklesIcon className="size-2  fill-current stroke-1" />
+														<SparklesIcon className="size-2 fill-current stroke-1" />
 														<p>6 interests in common!</p>
 													</div>
 												</div>
@@ -286,7 +286,7 @@ export default function ImagesSection() {
 													<p className="">@livelikejess</p>
 													<p>·</p>
 													<div className="flex flex-row items-center gap-1 text-amber-500">
-														<SparklesIcon className="size-2  fill-current stroke-1" />
+														<SparklesIcon className="size-2 fill-current stroke-1" />
 														<p>4 interests in common!</p>
 													</div>
 												</div>

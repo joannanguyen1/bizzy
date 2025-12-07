@@ -1,5 +1,6 @@
 "use client";
 import { useId } from "react";
+import { useSafari } from "@/hooks/use-safari";
 
 export default function Hexagon({
 	color,
@@ -16,8 +17,7 @@ export default function Hexagon({
 }) {
 	const gradientId = useId()
 	const clipId = useId()
-
-	const isSafari = typeof window !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
+	const isSafari = useSafari()
 
 	const colorConfig = {
 		'bg-[#F59E0B]': { base: '#F59E0B', light: '#FCD34D', stroke: '#C87E00' },

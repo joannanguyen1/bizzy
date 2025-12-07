@@ -198,9 +198,15 @@ export default function Map({ placeId = undefined }: MapProps) {
         setUserNotes(null);
 
         if (result.place_id) {
-          checkIfPlaceIsSaved(result.place_id);
-          nprogress.start();
-          router.push(`/map/places/${encodeURIComponent(result.place_id)}`);
+          //? Ensure marker is fully set up before navigation
+          if (clickMarkerRef.current) {
+            checkIfPlaceIsSaved(result.place_id);
+            nprogress.start();
+            //? Use setTimeout to ensure marker is fully rendered before navigation
+            setTimeout(() => {
+              router.push(`/map/places/${encodeURIComponent(result.place_id)}`);
+            }, 0);
+          }
         }
       } else {
         const fallbackPlace: SelectedPlace = {
