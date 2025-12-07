@@ -297,7 +297,7 @@ const Dashboard = ({ interests, interestsLoading, onboardingChecked }: { interes
   return (
     <div className="flex flex-1 min-w-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 flex flex-col gap-6 flex-1 w-full h-full overflow-y-auto min-w-0">
-        <div className="flex items-center justify-start p-4 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="flex items-center justify-start">
           <PlacesSearchCommand />
         </div>
         <div className="flex flex-col gap-8 pb-8 min-w-0">

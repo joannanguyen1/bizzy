@@ -8,19 +8,20 @@ export default async function ProfilePage({
 }: {
   params: Promise<{ username: string }>;
 }) {
+  const headersList = await headers();
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: headersList,
   });
 
   const { username } = await params;
   const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
-  const headersList = await headers();
 
   const userResponse = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/by-username/${cleanUsername}`,
     {
       headers: headersList,
-      cache: 'no-store'
+      cache: 'force-cache',
+      next: { revalidate: 300 }
     }
   );
 
@@ -36,14 +37,16 @@ export default async function ProfilePage({
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}`,
       {
         headers: headersList,
-        cache: 'no-store'
+        cache: 'force-cache',
+        next: { revalidate: 300 }
       }
     ),
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}/places`,
       {
         headers: headersList,
-        cache: 'no-store'
+        cache: 'force-cache',
+        next: { revalidate: 300 }
       }
     ),
     fetch(

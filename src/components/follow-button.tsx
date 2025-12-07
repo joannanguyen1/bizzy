@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useFollowStatus } from "@/hooks/use-follow-status";
@@ -19,12 +19,19 @@ export function FollowButton({
   onFollowChange,
 }: FollowButtonProps) {
   const { isFollowing, isLoading, toggleFollow, isToggling } = useFollowStatus(userId);
+  const onFollowChangeRef = useRef(onFollowChange);
+  const prevIsFollowingRef = useRef(isFollowing);
 
   useEffect(() => {
-    if (onFollowChange) {
-      onFollowChange(isFollowing);
+    onFollowChangeRef.current = onFollowChange;
+  }, [onFollowChange]);
+
+  useEffect(() => {
+    if (onFollowChangeRef.current && prevIsFollowingRef.current !== isFollowing) {
+      prevIsFollowingRef.current = isFollowing;
+      onFollowChangeRef.current(isFollowing);
     }
-  }, [isFollowing, onFollowChange]);
+  }, [isFollowing]);
 
   if (isLoading) {
     return (
@@ -36,7 +43,7 @@ export function FollowButton({
 
   return (
     <Button
-      variant={isFollowing ? "default" : "outline"}
+      variant={isFollowing ? "outline" : "default"}
       size={size}
       onClick={toggleFollow}
       disabled={isToggling}
