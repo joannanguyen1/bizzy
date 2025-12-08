@@ -13,13 +13,15 @@ export default async function ProfilePage({
     headers: headersList,
   });
 
+  const fetchHeaders = new Headers(headersList);
+
   const { username } = await params;
   const cleanUsername = username.startsWith("@") ? username.slice(1) : username;
 
   const userResponse = await fetch(
     `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/by-username/${cleanUsername}`,
     {
-      headers: headersList,
+      headers: fetchHeaders,
       cache: 'force-cache',
       next: { revalidate: 300 }
     }
@@ -36,7 +38,7 @@ export default async function ProfilePage({
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}`,
       {
-        headers: headersList,
+        headers: fetchHeaders,
         cache: 'force-cache',
         next: { revalidate: 300 }
       }
@@ -44,7 +46,7 @@ export default async function ProfilePage({
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/profile/${fetchedUserId}/places`,
       {
-        headers: headersList,
+        headers: fetchHeaders,
         cache: 'force-cache',
         next: { revalidate: 300 }
       }
@@ -52,14 +54,14 @@ export default async function ProfilePage({
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/${fetchedUserId}/followers`,
       {
-        headers: headersList,
+        headers: fetchHeaders,
         cache: 'no-store'
       }
     ),
     fetch(
       `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/users/${fetchedUserId}/following`,
       {
-        headers: headersList,
+        headers: fetchHeaders,
         cache: 'no-store'
       }
     ),
