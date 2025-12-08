@@ -44,9 +44,13 @@ export async function GET(
 
     await Promise.all(
       uniquePlaceIds.map(async (placeId) => {
-        const details = await fetchPlaceDetails(placeId);
-        if (details) {
-          placeDetailsMap.set(placeId, details);
+        try {
+          const details = await fetchPlaceDetails(placeId);
+          if (details) {
+            placeDetailsMap.set(placeId, details);
+          }
+        } catch (err) {
+          console.error(`Failed to fetch details for placeId ${placeId}:`, err);
         }
       })
     );

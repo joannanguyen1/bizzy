@@ -200,12 +200,11 @@ export default function Map({ placeId = undefined }: MapProps) {
         if (result.place_id) {
           //? Ensure marker is fully set up before navigation
           if (clickMarkerRef.current) {
-            checkIfPlaceIsSaved(result.place_id);
             nprogress.start();
-            //? Use setTimeout to ensure marker is fully rendered before navigation
-            setTimeout(() => {
+            (async () => {
+              await checkIfPlaceIsSaved(result.place_id);
               router.push(`/map/places/${encodeURIComponent(result.place_id)}`);
-            }, 0);
+            })();
           }
         }
       } else {
