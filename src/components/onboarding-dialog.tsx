@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import {
   ArrowLeftIcon,
   ArrowRight,
-  CircleUserRoundIcon,
   XIcon,
   ZoomInIcon,
   ZoomOutIcon,
   CheckIcon,
+  SparklesIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useFileUpload } from "@/hooks/use-file-upload"
@@ -35,6 +35,10 @@ import { Card } from "@/components/ui/card"
 import { motion, AnimatePresence } from "framer-motion"
 import { nameSchema } from "@/schema/auth-schema"
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog"
+import BoringAvatar from "boring-avatars"
+import confetti from "canvas-confetti"
+
+const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"]
 
 type Area = { x: number; y: number; width: number; height: number }
 
@@ -143,6 +147,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [followingUsers, setFollowingUsers] = useState<Set<string>>(new Set())
+  const confettiIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const [
     { files, isDragging },
@@ -244,6 +249,15 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       }
     }
   }, [finalImageUrl])
+
+  useEffect(() => {
+    return () => {
+      if (confettiIntervalRef.current) {
+        clearInterval(confettiIntervalRef.current)
+        confettiIntervalRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (fileId && fileId !== previousFileIdRef.current) {
@@ -408,7 +422,54 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
       })
 
       if (response.ok) {
-        onComplete()
+        const duration = 3000
+        const animationEnd = Date.now() + duration
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 }
+
+        function randomInRange(min: number, max: number) {
+          return Math.random() * (max - min) + min
+        }
+
+        confettiIntervalRef.current = setInterval(function() {
+          const timeLeft = animationEnd - Date.now()
+
+          if (timeLeft <= 0) {
+            if (confettiIntervalRef.current) {
+              clearInterval(confettiIntervalRef.current)
+              confettiIntervalRef.current = null
+            }
+            return
+          }
+
+          const particleCount = 50 * (timeLeft / duration)
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+          })
+          confetti({
+            ...defaults,
+            particleCount,
+            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+          })
+        }, 250)
+
+        setTimeout(() => {
+          confetti({
+            ...defaults,
+            particleCount: 100,
+            origin: { x: 0.5, y: 0.5 },
+            angle: randomInRange(55, 125)
+          })
+        }, 500)
+
+        setTimeout(() => {
+          if (confettiIntervalRef.current) {
+            clearInterval(confettiIntervalRef.current)
+            confettiIntervalRef.current = null
+          }
+          onComplete()
+        }, duration)
       } else {
         console.error("Failed to save onboarding data")
       }
@@ -457,7 +518,7 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            <div className="min-h-[300px]">
+            <div className="">
               {step === 1 && (
                 <div className="space-y-6">
                   <div className="space-y-4">
@@ -617,8 +678,14 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                           style={{ objectFit: "cover" }}
                         />
                       ) : (
-                        <div aria-hidden="true">
-                          <CircleUserRoundIcon className="size-12 opacity-60" />
+                        <div className="rounded-full overflow-hidden size-full">
+                          <BoringAvatar
+                            name={firstName && lastName ? `${firstName} ${lastName}` : "User"}
+                            variant="marble"
+                            colors={AVATAR_COLORS}
+                            size={128}
+                            square={false}
+                          />
                         </div>
                       )}
                     </button>
@@ -673,22 +740,31 @@ export function OnboardingDialog({ open, userId, onComplete }: OnboardingDialogP
                                   className="size-12 rounded-full object-cover"
                                 />
                               ) : (
-                                <div className="flex size-12 items-center justify-center rounded-full bg-amber-100">
-                                  <CircleUserRoundIcon className="size-6 text-amber-600" />
+                                <div className="rounded-full overflow-hidden">
+                                  <BoringAvatar
+                                    name={user.name}
+                                    variant="marble"
+                                    colors={AVATAR_COLORS}
+                                    size={48}
+                                    square={false}
+                                  />
                                 </div>
                               )}
                               <div>
                                 <p className="font-medium">{user.name}</p>
                                 {user.sharedInterests > 0 && (
-                                  <p className="text-sm text-muted-foreground">
-                                    {user.sharedInterests} shared interest
-                                    {user.sharedInterests !== 1 ? "s" : ""}
-                                  </p>
+                                  <div className={cn("flex items-center gap-1", user.sharedInterests > 2 ? "text-amber-500" : "text-muted-foreground")}>
+                                    <SparklesIcon className="size-3 fill-current stroke-1" />
+                                    <p className="text-sm">
+                                      {user.sharedInterests} shared interest
+                                      {user.sharedInterests !== 1 ? "s" : ""}
+                                    </p>
+                                  </div>
                                 )}
                               </div>
                             </div>
                             <Button
-                              variant={followingUsers.has(user.id) ? "default" : "outline"}
+                              variant={followingUsers.has(user.id) ? "outline" : "default"}
                               size="sm"
                               onClick={() => handleFollowUser(user.id)}
                             >

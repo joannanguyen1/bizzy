@@ -11,6 +11,7 @@ import BizzyLogo from "@/components/logo";
 import { GithubIcon, TwitterIcon } from "lucide-react";
 import { LoggedInLayout } from "@/components/logged-in-layout";
 import { headers } from "next/headers";
+import Link from "next/link";
 
 export default async function HomePage() {
   const session = await auth.api.getSession({
@@ -38,7 +39,9 @@ export default async function HomePage() {
                 <h1>Your city.</h1>
                 <h1>Your friends.</h1>
               </div>
-              <Button className="rounded-lg px-6 py-6 text-base">Begin your hive</Button>
+              <Link href="/auth/register">
+                <Button className="rounded-lg px-6 py-6 text-base">Begin your hive</Button>
+              </Link>
               <div className="flex flex-row items-center gap-2 lg:gap-1 mt-6">
                 <div className="flex -space-x-[0.6rem] pointer-events-none select-none">
                   <Image
@@ -131,7 +134,7 @@ export default async function HomePage() {
         <ImagesSection />
         <Footer
           logo={<BizzyLogo width={40} height={40} />}
-          brandName="Bizzy"
+          brandName="bizzy"
           socialLinks={[
             {
               icon: <TwitterIcon className="h-5 w-5" />,

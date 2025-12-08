@@ -262,7 +262,7 @@ export default function PlacesSearchCommand() {
             aria-hidden="true"
           />
           <span className="font-normal text-muted-foreground/70">
-            Search...
+            Search places or users...
           </span>
         </span>
         <kbd className="ms-12 -me-1 inline-flex h-5 max-h-full items-center rounded border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">

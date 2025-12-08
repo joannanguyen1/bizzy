@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { LoggedInLayout } from "@/components/logged-in-layout";
@@ -12,6 +12,9 @@ import { FollowButton } from "@/components/follow-button";
 import { FollowersDialog } from "@/components/followers-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ReviewCard } from "@/components/review-card";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -127,6 +130,27 @@ interface SavedPlace {
   rating?: number;
 }
 
+interface Review {
+  id: string;
+  userId: string;
+  placeId: string;
+  rating: number;
+  review: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    username: string | null;
+    image: string | null;
+  };
+  place?: {
+    place_id: string;
+    name: string;
+  };
+  likeCount?: number;
+  isLiked?: boolean;
+}
+
 function getInitials(name: string) {
   if (!name) return "US";
   return name
@@ -162,7 +186,7 @@ interface ProfilePageClientProps {
   initialFollowing?: UserItem[];
 }
 
-export default function ProfilePageClient({
+function ProfilePageClient({
   profileData: initialProfileData,
   places,
   userId,
@@ -175,7 +199,28 @@ export default function ProfilePageClient({
   const [profileData, setProfileData] = useState<ProfileData>(initialProfileData);
   const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
   const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
-  const [placesWithRatings, setPlacesWithRatings] = useState<SavedPlace[]>(places);
+
+  const placesStringRef = useRef<string>(JSON.stringify(places));
+  const profileDataStringRef = useRef<string>(JSON.stringify(initialProfileData));
+
+  const sortedPlaces = useMemo(() => {
+    return [...places].sort((a, b) => {
+      const ratingA = a.rating ?? null;
+      const ratingB = b.rating ?? null;
+
+      if (ratingA === null && ratingB === null) {
+        return a.name.localeCompare(b.name);
+      }
+      if (ratingA === null) return 1;
+      if (ratingB === null) return -1;
+
+      return ratingB - ratingA;
+    });
+  }, [places]);
+
+  const [placesWithRatings, setPlacesWithRatings] = useState<SavedPlace[]>(sortedPlaces);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(true);
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState("");
@@ -375,40 +420,67 @@ export default function ProfilePageClient({
   const isOwnProfile = userId === currentUserId;
   const user = profileData.user;
 
-  const handleFollowChange = async () => {
+  const handleFollowChange = useCallback(async () => {
     try {
       const profileResponse = await fetch(`/api/profile/${userId}`);
       if (profileResponse.ok) {
         const profile = await profileResponse.json();
-        setProfileData({
+        setProfileData((prev) => ({
           ...profile,
           user: {
+            ...prev.user,
             ...profile.user,
-            username: user.username,
+            username: prev.user.username,
           },
-        });
+        }));
       }
     } catch (error) {
       console.error("Error refreshing profile data:", error);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
-    const sortedPlaces = [...places].sort((a, b) => {
-      const ratingA = a.rating ?? null;
-      const ratingB = b.rating ?? null;
-      
-      if (ratingA === null && ratingB === null) {
-        return a.name.localeCompare(b.name);
+    const placesString = JSON.stringify(places);
+    if (placesStringRef.current !== placesString) {
+      placesStringRef.current = placesString;
+      setPlacesWithRatings(sortedPlaces);
+    }
+  }, [places, sortedPlaces]);
+
+  useEffect(() => {
+    const profileDataString = JSON.stringify(initialProfileData);
+    if (profileDataStringRef.current !== profileDataString) {
+      profileDataStringRef.current = profileDataString;
+      setProfileData(initialProfileData);
+    }
+  }, [initialProfileData]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchReviews = async () => {
+      try {
+        setLoadingReviews(true);
+        const response = await fetch(`/api/users/${userId}/reviews`);
+        if (response.ok && isMounted) {
+          const data = await response.json();
+          setReviews(data.reviews || []);
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        if (isMounted) {
+          setLoadingReviews(false);
+        }
       }
-      if (ratingA === null) return 1;
-      if (ratingB === null) return -1;
-      
-      return ratingB - ratingA;
-    });
-    
-    setPlacesWithRatings(sortedPlaces);
-  }, [places]);
+    };
+
+    fetchReviews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   const profileContent = (
     <div className="flex flex-1 min-h-0">
@@ -578,91 +650,186 @@ export default function ProfilePageClient({
                 )}
                 <div className="flex flex-col items-center">
                   <span className="font-semibold text-foreground">
+                    {reviews.length}
+                  </span>
+                  <span className="text-muted-foreground">Reviews</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="font-semibold text-foreground">
                     {places.length}
                   </span>
-                  <span className="text-muted-foreground">Places</span>
+                  <span className="text-muted-foreground">Saves</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">
-              {isOwnProfile ? "Your Saved Places" : `${user.name}'s Saved Places`}
-            </h2>
-            {placesWithRatings.length === 0 ? (
-              <div className="py-12 text-center">
-                <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">
-                  {isOwnProfile
-                    ? "You haven't saved any places yet."
-                    : "This user hasn't saved any places yet."}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {placesWithRatings.map((place) => {
-                  const hasPlaceId = hasValidPlaceId(place.placeId);
+            <Tabs defaultValue="reviews" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                <TabsTrigger value="saved">Saved</TabsTrigger>
+              </TabsList>
 
-                  const cardContent = (
-                    <Card
-                      className={cn(
-                        "hover:shadow-md transition-shadow",
-                        hasPlaceId && "cursor-pointer hover:border-primary"
-                      )}
+              <TabsContent value="reviews" className="mt-0">
+                <AnimatePresence mode="wait">
+                  {loadingReviews ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="py-12 text-center"
                     >
-                      <CardHeader>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg mb-2">{place.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-2 mb-2">
-                              <MapPinIcon className="h-4 w-4 shrink-0" />
-                              <span className="truncate">{place.formattedAddress}</span>
-                            </CardDescription>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <CalendarIcon className="h-3 w-3" />
-                              <span>
-                                Saved on{" "}
-                                {new Date(place.createdAt).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </span>
-                            </div>
+                      <p className="text-muted-foreground">Loading reviews...</p>
+                    </motion.div>
+                  ) : reviews.length === 0 ? (
+                    <motion.div
+                      key="empty"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="py-12 text-center"
+                    >
+                      <Star className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <p className="text-muted-foreground">
+                        {isOwnProfile
+                          ? "You haven't written any reviews yet."
+                          : "This user hasn't written any reviews yet."}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="reviews"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-4"
+                    >
+                      {reviews.map((review, index) => (
+                        <motion.div
+                          key={review.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            delay: index * 0.05,
+                            duration: 0.3,
+                            ease: "easeOut"
+                          }}
+                        >
+                          <ReviewCard review={review} />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </TabsContent>
+
+              <TabsContent value="saved" className="mt-0">
+                <AnimatePresence mode="wait">
+                  {placesWithRatings.length === 0 ? (
+                    <motion.div
+                      key="empty-saved"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      className="py-12 text-center"
+                    >
+                      <MapPinIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                      <p className="text-muted-foreground">
+                        {isOwnProfile
+                          ? "You haven't saved any places yet."
+                          : "This user hasn't saved any places yet."}
+                      </p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="saved-places"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="space-y-4"
+                    >
+                      {placesWithRatings.map((place, index) => {
+                        const hasPlaceId = hasValidPlaceId(place.placeId);
+
+                        const cardContent = (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              delay: index * 0.05,
+                              duration: 0.3,
+                              ease: "easeOut"
+                            }}
+                          >
+                            <Card
+                              className={cn(
+                                "hover:shadow-md transition-all duration-200",
+                                hasPlaceId && "cursor-pointer hover:border-primary"
+                              )}
+                            >
+                              <CardHeader>
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <CardTitle className="text-lg mb-2">{place.name}</CardTitle>
+                                    <CardDescription className="flex items-center gap-2 mb-2">
+                                      <MapPinIcon className="h-4 w-4 shrink-0" />
+                                      <span className="truncate">{place.formattedAddress}</span>
+                                    </CardDescription>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      <span>
+                                        Saved on{" "}
+                                        {new Date(place.createdAt).toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {place.rating !== undefined && place.rating !== null && (
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                                      <span className="font-semibold text-lg">{place.rating.toFixed(1)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </CardHeader>
+                            </Card>
+                          </motion.div>
+                        );
+
+                        if (hasPlaceId) {
+                          const placeIdValue = String(place.placeId).trim();
+                          return (
+                            <Link
+                              key={place.id}
+                              href={`/map/places/${encodeURIComponent(placeIdValue)}`}
+                              className="block w-full no-underline relative z-1 pointer-events-auto"
+                            >
+                              {cardContent}
+                            </Link>
+                          );
+                        }
+
+                        return (
+                          <div key={place.id} className="relative z-1">
+                            {cardContent}
                           </div>
-                          {place.rating !== undefined && place.rating !== null && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                              <span className="font-semibold text-lg">{place.rating.toFixed(1)}</span>
-                            </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  );
-
-                  if (hasPlaceId) {
-                    const placeIdValue = String(place.placeId).trim();
-                    return (
-                      <Link
-                        key={place.id}
-                        href={`/map/places/${encodeURIComponent(placeIdValue)}`}
-                        className="block w-full no-underline relative z-1 pointer-events-auto"
-                      >
-                        {cardContent}
-                      </Link>
-                    );
-                  }
-
-                  return (
-                    <div key={place.id} className="relative z-1">
-                      {cardContent}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
@@ -780,4 +947,6 @@ export default function ProfilePageClient({
     </>
   );
 }
+
+export default ProfilePageClient;
 

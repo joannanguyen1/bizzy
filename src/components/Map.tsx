@@ -1,8 +1,13 @@
 "use client";
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Star } from "lucide-react";
+import nprogress from "nprogress";
 
 declare global {
   interface Window {
@@ -45,6 +50,7 @@ interface MapProps {
 }
 
 export default function Map({ placeId = undefined }: MapProps) {
+  const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
@@ -192,7 +198,14 @@ export default function Map({ placeId = undefined }: MapProps) {
         setUserNotes(null);
 
         if (result.place_id) {
-          checkIfPlaceIsSaved(result.place_id);
+          //? Ensure marker is fully set up before navigation
+          if (clickMarkerRef.current) {
+            nprogress.start();
+            (async () => {
+              await checkIfPlaceIsSaved(result.place_id);
+              router.push(`/map/places/${encodeURIComponent(result.place_id)}`);
+            })();
+          }
         }
       } else {
         const fallbackPlace: SelectedPlace = {
@@ -252,11 +265,20 @@ export default function Map({ placeId = undefined }: MapProps) {
           map.panTo(place.geometry.location);
           map.setZoom(15);
 
-          markerRef.current = new maps.Marker({
+          const marker = new maps.Marker({
             position: place.geometry.location,
             map,
             title: place.name,
           });
+
+          if (place.place_id) {
+            marker.addListener("click", () => {
+              nprogress.start();
+              router.push(`/map/places/${encodeURIComponent(place.place_id!)}`);
+            });
+          }
+
+          markerRef.current = marker;
 
           const loadedPlace: SelectedPlace = {
             name: place.name || "",
@@ -482,84 +504,85 @@ export default function Map({ placeId = undefined }: MapProps) {
       <div ref={mapRef} className="w-full h-[600px] rounded-lg shadow-lg" />
 
       {selectedPlace && (
-        <div className="w-3/4 mt-4 p-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg">
-          <h3 className="text-lg font-semibold mb-2 text-black dark:text-white">
-            {selectedPlace.name}
-          </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            {selectedPlace.formattedAddress}
-          </p>
-          <button
-            onClick={handleAddPlaceWithReview}
-            disabled={isSaving || isPlaceSaved || isCheckingSaved}
-            className={`w-full px-4 py-2 font-medium rounded-md transition-colors ${
-              isPlaceSaved
-                ? "bg-green-600 hover:bg-green-700 text-white cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white"
-            }`}
-          >
-            {isSaving
-              ? "Saving..."
-              : isCheckingSaved
-              ? "Checking..."
-              : isPlaceSaved
-              ? "Saved"
-              : "Add Place"}
-          </button>
-
-          {isPlaceSaved && (
-            <button
-              type="button"
-              onClick={handleOpenReviewPopup}
-              className="mt-3 w-full px-4 py-2 text-sm font-semibold rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50"
+        <Card className="w-full mt-4">
+          <CardHeader>
+            <CardTitle className="text-lg">{selectedPlace.name}</CardTitle>
+            <CardDescription>{selectedPlace.formattedAddress}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button
+              onClick={handleAddPlaceWithReview}
+              disabled={isSaving || isPlaceSaved || isCheckingSaved}
+              className="w-full"
+              variant={isPlaceSaved ? "secondary" : "default"}
             >
-              {userNotes ? "Edit Your Review" : "Add a Review"}
-            </button>
-          )}
-        </div>
+              {isSaving
+                ? "Saving..."
+                : isCheckingSaved
+                ? "Checking..."
+                : isPlaceSaved
+                ? "Saved"
+                : "Add to List"}
+            </Button>
+
+              <Button
+                type="button"
+                onClick={handleOpenReviewPopup}
+                disabled={!isPlaceSaved}
+                variant="outline"
+                className="w-full"
+              >
+                {userNotes ? "Edit Your Review" : "Add a Review"}
+              </Button>
+          </CardContent>
+        </Card>
       )}
 
       {userNotes && (
-        <div className="w-3/4 mt-3">
-          <button
-            type="button"
-            onClick={() => setIsNotesOpen((open) => !open)}
-            className="flex w-full items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-4 text-lg font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
-          >
-            <span>Your Notes</span>
-            <span
-              className={`text-black text-xl transition-transform ${
-                isNotesOpen ? "rotate-180" : ""
-              }`}
+        <Card className="w-3/4 mt-3">
+          <CardHeader>
+            <Button
+              type="button"
+              onClick={() => setIsNotesOpen((open) => !open)}
+              variant="ghost"
+              className="w-full justify-between p-0 h-auto font-semibold"
             >
-              ▼
-            </span>
-          </button>
-
+              <span>Your Notes</span>
+              <span
+                className={`text-xl transition-transform ${
+                  isNotesOpen ? "rotate-180" : ""
+                }`}
+              >
+                ▼
+              </span>
+            </Button>
+          </CardHeader>
           {isNotesOpen && (
-            <div className="mt-2 rounded-lg border border-orange-200 bg-orange-50 px-5 py-4">
-              <div className="flex items-center gap-2 mb-3">
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const isActive = star <= userNotes.rating;
-                  return (
-                    <span
-                      key={star}
-                      className={`text-2xl ${
-                        isActive ? "text-orange-500" : "text-orange-200"
-                      }`}
-                    >
-                      ★
-                    </span>
-                  );
-                })}
-              </div>
+            <CardContent className="pt-0">
+              <div className="rounded-lg border border-primary/20 bg-primary/5 px-5 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const isActive = star <= userNotes.rating;
+                    return (
+                      <Star
+                        key={star}
+                        className={`h-6 w-6 ${
+                          isActive
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                      />
+                    );
+                  })}
+                </div>
 
-              <p className="text-xl text-orange-900 leading-relaxed">
-                {userNotes.review}
-              </p>
-            </div>
+                <p className="text-base leading-relaxed">
+                  {userNotes.review}
+                </p>
+              </div>
+            </CardContent>
           )}
-        </div>
+        </Card>
       )}
 
       {isReviewPopupOpen && (

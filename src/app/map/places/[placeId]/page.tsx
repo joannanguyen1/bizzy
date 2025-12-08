@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import MapPlaceClient from "./map-place-client";
 
 interface MapPlacePageProps {

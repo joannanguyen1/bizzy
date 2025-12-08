@@ -1,5 +1,6 @@
 "use client";
 import { useId } from "react";
+import { useSafari } from "@/hooks/use-safari";
 
 export default function Hexagon({
 	color,
@@ -14,8 +15,9 @@ export default function Hexagon({
 	hasVideo?: boolean;
 	videoUrl?: string;
 }) {
-	const clipId = useId()
 	const gradientId = useId()
+	const clipId = useId()
+	const isSafari = useSafari()
 
 	const colorConfig = {
 		'bg-[#F59E0B]': { base: '#F59E0B', light: '#FCD34D', stroke: '#C87E00' },
@@ -29,6 +31,59 @@ export default function Hexagon({
 		: `url(#${gradientId})`;
 
 	if (hasVideo && videoUrl) {
+		const hexPath = "M76.7605 3.57703C82.6664 0.141539 89.9621 0.141455 95.8679 3.57703L162.181 42.1532C168.03 45.5552 171.628 51.8104 171.628 58.576V135.991C171.628 142.757 168.03 149.013 162.181 152.415L95.8679 190.991C89.9621 194.427 82.6663 194.426 76.7605 190.991L10.446 152.415C4.59777 149.013 0.999756 142.757 0.999756 135.991V58.576C0.999892 51.8104 4.59797 45.5552 10.446 42.1532L76.7605 3.57703Z";
+
+		//? Safari-friendly implementation with CSS clip-path
+		if (isSafari) {
+			//? Approximate hexagon polygon for CSS clip-path (more Safari-friendly)
+			//? Top point, top-right, bottom-right, bottom point, bottom-left, top-left
+			const cssHexPolygon = "polygon(50% 1.8%, 93.7% 21.6%, 93.7% 78.2%, 50% 98.2%, 6.3% 78.2%, 6.3% 21.6%)";
+
+			return (
+				<div
+					className="relative hex-grid"
+					style={{
+						width: 'var(--hex-size)',
+						height: 'var(--hex-height)',
+						transform: 'translate3d(0, 0, 0)', //* Force Safari to create new stacking context
+					}}
+				>
+					{/*! Container with CSS clip-path - Safari handles this better */}
+					<div
+						style={{
+							width: '100%',
+							height: '100%',
+							position: 'relative',
+							clipPath: cssHexPolygon,
+							WebkitClipPath: cssHexPolygon, //* Safari prefix
+							overflow: 'hidden',
+							transform: 'translate3d(0, 0, 0)', //* Force Safari rendering
+							willChange: 'transform', //* Optimize for Safari
+						}}
+					>
+						<video
+							autoPlay
+							loop
+							muted
+							playsInline
+							style={{
+								width: '100%',
+								height: '100%',
+								objectFit: 'cover',
+								display: 'block',
+								position: 'relative',
+								transform: 'translate3d(0, 0, 0)', //* Force hardware acceleration
+							}}
+							aria-label="Video of a park skating"
+						>
+							<source src={videoUrl} type="video/mp4" />
+						</video>
+					</div>
+				</div>
+			);
+		}
+
+		//? Original implementation for Chrome and other browsers (with rounded corners)
 		return (
 			<div
 				className="relative hex-grid"
@@ -40,7 +95,7 @@ export default function Hexagon({
 				<svg viewBox="0 0 173 195" className="w-full h-full drop-shadow-md">
 					<defs>
 						<clipPath id={clipId}>
-							<path d="M76.7605 3.57703C82.6664 0.141539 89.9621 0.141455 95.8679 3.57703L162.181 42.1532C168.03 45.5552 171.628 51.8104 171.628 58.576V135.991C171.628 142.757 168.03 149.013 162.181 152.415L95.8679 190.991C89.9621 194.427 82.6663 194.426 76.7605 190.991L10.446 152.415C4.59777 149.013 0.999756 142.757 0.999756 135.991V58.576C0.999892 51.8104 4.59797 45.5552 10.446 42.1532L76.7605 3.57703Z" />
+							<path d={hexPath} />
 						</clipPath>
 					</defs>
 					<foreignObject x="0" y="0" width="173" height="195" clipPath={`url(#${clipId})`}>
@@ -55,12 +110,6 @@ export default function Hexagon({
 							<source src={videoUrl} type="video/mp4" />
 						</video>
 					</foreignObject>
-					<path
-						d="M76.7605 3.57703C82.6664 0.141539 89.9621 0.141455 95.8679 3.57703L162.181 42.1532C168.03 45.5552 171.628 51.8104 171.628 58.576V135.991C171.628 142.757 168.03 149.013 162.181 152.415L95.8679 190.991C89.9621 194.427 82.6663 194.426 76.7605 190.991L10.446 152.415C4.59777 149.013 0.999756 142.757 0.999756 135.991V58.576C0.999892 51.8104 4.59797 45.5552 10.446 42.1532L76.7605 3.57703Z"
-						fill="none"
-						stroke="#E5E7EB"
-						strokeWidth="1"
-					/>
 				</svg>
 			</div>
 		);

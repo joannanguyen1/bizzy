@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/follow-button";
 import BoringAvatar from "boring-avatars";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { SparklesIcon } from "lucide-react";
 
 const AVATAR_COLORS = ["#F59E0B", "#FBBF24", "#FDE047", "#FEF3C7", "#FFFBEB"];
 
@@ -117,9 +119,12 @@ export function UsersToFollowCarousel({ interests }: { interests: string[] }) {
                           <p className="text-sm text-muted-foreground">@{user.username}</p>
                         )}
                         {user.sharedInterests > 0 && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <div className="flex flex-row items-center justify-center gap-1">
+                          <SparklesIcon className={cn("size-2 fill-current stroke-1", user.sharedInterests > 2 ? "text-amber-500" : "text-muted-foreground")} />
+                          <p className={cn("text-xs text-muted-foreground", user.sharedInterests > 2 ? "text-amber-500" : "")}>
                             {user.sharedInterests} shared interest{user.sharedInterests !== 1 ? "s" : ""}
                           </p>
+                          </div>
                         )}
                       </div>
                     </Link>
